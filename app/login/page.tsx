@@ -5,6 +5,29 @@ import '@aws-amplify/ui-react/styles.css';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getCurrentUser, signOut } from 'aws-amplify/auth';
+import Image from 'next/image';
+import Autoplay from 'embla-carousel-autoplay';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from '@/components/ui/carousel';
+
+const carouselSlides = [
+  {
+    image: 'https://ddk4x72zkug5e.cloudfront.net/carousel_images/carousel_image1.png',
+    text: 'Know where your favorite leaders and MPs stand on the issues. Anytime, anywhere.',
+  },
+  {
+    image: 'https://ddk4x72zkug5e.cloudfront.net/carousel_images/carousel_image2.png',
+    text: 'Set up debates between the political stars of the day, on demand.',
+  },
+  {
+    image: 'https://ddk4x72zkug5e.cloudfront.net/carousel_images/carousel_image3.png',
+    text: 'Get a direct line to your representatives like never before.',
+  },
+];
 
 function AuthContent() {
   const router = useRouter();
@@ -27,9 +50,10 @@ function AuthContent() {
 export default function LoginPage() {
   const router = useRouter();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    // Check if user is already authenticated on page load
     const checkExistingAuth = async () => {
       try {
         const user = await getCurrentUser();
@@ -47,64 +71,123 @@ export default function LoginPage() {
     checkExistingAuth();
   }, [router]);
 
-  // Show loading while checking authentication status
+  useEffect(() => {
+    if (!api) return;
+    setCurrent(api.selectedScrollSnap());
+    api.on('select', () => setCurrent(api.selectedScrollSnap()));
+  }, [api]);
+
   if (isCheckingAuth) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-white via-blue-50 to-indigo-50">
-        <div className="text-center">
-          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" role="status">
-            <span className="sr-only">Loading...</span>
-          </div>
-          <p className="mt-4 text-slate-600">Loading...</p>
+      <div className="flex h-screen items-center justify-center bg-gray-800">
+        <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-white/20 border-t-white" role="status">
+          <span className="sr-only">Loading...</span>
         </div>
       </div>
     );
   }
+
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-white via-blue-50 to-indigo-50 py-12">
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-200/30 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-indigo-200/30 blur-3xl" />
-      </div>
+    <div className="flex flex-col h-screen">
 
-      {/* Login Container */}
-      <div className="relative z-10 flex w-full max-w-md flex-col items-center px-6">
-        <div className="mb-8 w-full text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/90 px-4 py-2 text-sm font-medium text-blue-700 backdrop-blur-sm shadow-sm">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
-            Secure Authentication
+      <div className="flex flex-1 overflow-hidden">
+
+        {/* Left: Logo, subtitle, and carousel */}
+        <div className="hidden md:flex flex-col flex-1 items-center justify-center bg-slate-900 px-10 py-12 gap-8">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <Image
+              src="https://ddk4x72zkug5e.cloudfront.net/logo_images/aipolitik_prototype_image.png"
+              alt="AIPolitik"
+              width={280}
+              height={82}
+              style={{ objectFit: 'contain', height: 'auto' }}
+              priority
+              className="shrink-0"
+            />
+            <p className="text-slate-300 text-lg font-medium whitespace-nowrap">
+              Instant chats and debates with the leaders of the day
+            </p>
           </div>
-          <h1 className="mb-3 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl">
-            Welcome Back
-          </h1>
-          <p className="text-slate-600">
-            Sign in to access your account
-          </p>
-        </div>
-
-        {/* Authenticator with custom styling */}
-        <div className="w-full">
-          <Authenticator 
-            hideSignUp={false}
-            loginMechanisms={['email']}
-            signUpAttributes={[
-              'name',
-            ]}
+          <Carousel
+            setApi={setApi}
+            opts={{ loop: true }}
+            plugins={[Autoplay({ delay: 5000, stopOnInteraction: false })]}
+            className="w-full max-w-5xl"
           >
-            {() => <AuthContent />}
-          </Authenticator>
+            <CarouselContent>
+              {carouselSlides.map((slide, index) => (
+                <CarouselItem key={index}>
+                  <div className="relative rounded-2xl aspect-[3/2] shadow-2xl">
+                    <Image
+                      src={slide.image}
+                      alt={`Slide ${index + 1}`}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      priority={index === 0}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                    <div className="absolute bottom-5 left-0 right-0 px-6">
+                      <p className="text-white text-lg font-semibold leading-snug drop-shadow-lg">
+                        {slide.text}
+                      </p>
+                    </div>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+
+          {/* Dot indicators */}
+          <div className="flex gap-2">
+            {carouselSlides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => api?.scrollTo(index)}
+                aria-label={`Go to slide ${index + 1}`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  index === current ? 'bg-white w-6' : 'bg-white/40 w-1.5'
+                }`}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* Footer text */}
-        <p className="mt-6 w-full text-center text-sm text-slate-600">
-          Protected by AWS Cognito
-        </p>
+        {/* Right: Authenticator
+            Outer div = scroll container.
+            Inner div = min-h-full centering wrapper so justify-center
+            always has a definite height to work against.
+        */}
+        <div className="w-full md:w-2/5 shrink-0 bg-white overflow-y-auto">
+          <div className="min-h-full flex flex-col items-center justify-center px-10 py-12">
+            <div className="w-full max-w-sm">
+
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-slate-900">Welcome back</h1>
+                <p className="mt-1 text-sm text-slate-500">Sign in to your account to continue.</p>
+              </div>
+
+              <Authenticator 
+                hideSignUp={false}
+                loginMechanisms={['email']}
+                signUpAttributes={[
+                  'name',
+                ]}
+              >
+                {() => <AuthContent />}
+              </Authenticator>
+
+              <p className="mt-8 text-center text-xs text-slate-400">
+                Protected by AWS Cognito
+              </p>
+
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      {/* Custom styles for Authenticator */}
+      {/* ── Authenticator styles ── */}
       <style jsx global>{`
-        /* Remove default Authenticator container styles */
         [data-amplify-authenticator] {
           --amplify-components-authenticator-router-box-shadow: none;
           --amplify-components-authenticator-router-border-width: 0;
@@ -114,58 +197,59 @@ export default function LoginPage() {
           --amplify-components-tabs-item-active-color: rgb(34 197 94);
           --amplify-components-tabs-item-active-border-color: rgb(34 197 94);
           --amplify-colors-background-primary: transparent;
+          width: 100%;
         }
 
         [data-amplify-authenticator] [data-amplify-router] {
-          border-radius: 1rem;
-          border: 1px solid rgb(226 232 240);
-          box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(12px);
-          padding: 2rem;
+          border: none;
+          box-shadow: none;
+          background: transparent;
+          padding: 0;
+          width: 100%;
         }
 
         [data-amplify-authenticator] .amplify-button--primary {
-          border-radius: 9999px;
+          border-radius: 0.5rem;
           font-weight: 600;
-          transition: all 0.2s;
-          padding: 0.75rem 2rem;
+          transition: background-color 0.15s, transform 0.15s;
         }
 
         [data-amplify-authenticator] .amplify-button--primary:hover {
-          transform: scale(1.02);
-          box-shadow: 0 10px 15px -3px rgb(34 197 94 / 0.3);
+          transform: translateY(-1px);
         }
 
-        [data-amplify-authenticator] .amplify-input,
-        [data-amplify-authenticator] .amplify-select {
-          border-radius: 0.75rem;
-          transition: all 0.2s;
-          padding: 0.75rem 1rem;
+        [data-amplify-authenticator] .amplify-input {
+          border-radius: 0.5rem;
+          border-color: rgb(226 232 240);
+          transition: border-color 0.15s, box-shadow 0.15s;
         }
 
-        [data-amplify-authenticator] .amplify-input:focus,
-        [data-amplify-authenticator] .amplify-select:focus {
-          box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+        [data-amplify-authenticator] .amplify-input:focus {
+          border-color: rgb(34 197 94);
+          box-shadow: 0 0 0 3px rgb(34 197 94 / 0.15);
         }
 
         [data-amplify-authenticator] .amplify-tabs {
-          margin-bottom: 1.5rem;
+          margin-bottom: 1.25rem;
+          border-bottom: 1px solid rgb(226 232 240);
         }
 
         [data-amplify-authenticator] .amplify-tabs-item {
           font-weight: 500;
-          padding: 0.75rem 1.5rem;
+          font-size: 0.875rem;
+          color: rgb(100 116 139);
         }
 
         [data-amplify-authenticator] .amplify-field-group__label {
           font-weight: 500;
-          margin-bottom: 0.5rem;
+          font-size: 0.875rem;
+          color: rgb(51 65 85);
         }
 
         [data-amplify-authenticator] .amplify-button--link {
           color: rgb(34 197 94);
           font-weight: 500;
+          font-size: 0.875rem;
         }
 
         [data-amplify-authenticator] .amplify-button--link:hover {
@@ -175,5 +259,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-
