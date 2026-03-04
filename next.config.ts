@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     AWS_COGNITO_REGION: process.env.AWS_COGNITO_REGION,
     AWS_COGNITO_POOL_ID: process.env.AWS_COGNITO_POOL_ID,
     AWS_COGNITO_APP_CLIENT_ID: process.env.AWS_COGNITO_APP_CLIENT_ID,
+    NEXT_PUBLIC_GRAPHQL_URL: process.env.NEXT_PUBLIC_GRAPHQL_URL,
   },
   images: {
     remotePatterns: [

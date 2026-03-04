@@ -34,7 +34,7 @@ function AuthContent() {
 
   useEffect(() => {
     // Redirect to home if already authenticated
-    router.push('/');
+    router.push('/home');
   }, [router]);
 
   return (
