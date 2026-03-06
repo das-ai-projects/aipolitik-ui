@@ -16,11 +16,6 @@ import { CandidatePosition, CandidatePositionResults } from '@/lib/graphql/types
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-/** Shape of the GraphQL response for searchCandidatePositions. */
-interface QueryData {
-  searchCandidatePositions: CandidatePositionResults;
-}
-
 interface Props {
   /**
    * The GraphQL query to run. It must accept `$searchAfter` and
@@ -34,6 +29,7 @@ interface Props {
    * unnecessarily reload when the parent re-renders.
    */
   variables: Record<string, unknown>;
+  dataKey: string;
 }
 
 // ── Spinner ───────────────────────────────────────────────────────────────────
@@ -80,12 +76,18 @@ function Spinner() {
  * A short cooldown (800 ms) after every page load prevents the scroll
  * handler from accidentally triggering another load straight away.
  */
-export default function ScrollablePositionList({ query, variables }: Props) {
+/** Default page size when not provided in variables (used for "no more pages" check). */
+const DEFAULT_PAGE_SIZE = 15;
+
+export default function ScrollablePositionList({ query, variables, dataKey }: Props) {
 
   // ── State ──────────────────────────────────────────────────────────────────
 
   // The cards currently shown in the list.
   const [positions, setPositions] = useState<CandidatePosition[]>([]);
+
+  // Page size from variables: if the server returns fewer than this, we don't try to load more.
+  const pageSize = Number(variables?.limit) || DEFAULT_PAGE_SIZE;
 
   // Cursor tokens from the last server response.
   // Pass searchAfter to the server to get the next page.
@@ -144,7 +146,7 @@ export default function ScrollablePositionList({ query, variables }: Props) {
   // executeQuery sends the query to the server on demand (not automatically).
   // loading becomes true while a request is in flight.
   // network-only means we always fetch fresh data instead of using a cache.
-  const [executeQuery, { loading }] = useLazyQuery<QueryData>(parsedQuery, {
+  const [executeQuery, { loading }] = useLazyQuery<any>(parsedQuery, {
     fetchPolicy: 'network-only',
   });
 
@@ -156,9 +158,9 @@ export default function ScrollablePositionList({ query, variables }: Props) {
    * tell when the user is on page 1.
    */
   const applyResult = useCallback(
-    (data: QueryData, isInitial = false) => {
-      const { edges, pageInfo } = data.searchCandidatePositions;
-      const nodes = edges.map((e) => e.node);
+    (data: any, isInitial = false) => {
+      const { edges, pageInfo } = data[dataKey];
+      const nodes = edges.map((e: any) => e.node);
       setPositions(nodes);
       setSearchAfter(pageInfo.searchAfter);
       setSearchBefore(pageInfo.searchBefore);
@@ -288,6 +290,8 @@ export default function ScrollablePositionList({ query, variables }: Props) {
    * Called every time the user scrolls the list.
    * Checks whether the user has reached the very top or very bottom and
    * loads the adjacent page accordingly.
+   * Does not load next page (searchAfter) if the current page is partial
+   * (fewer items than requested), meaning there are no more results.
    * Ignored during the 800 ms cooldown after a page load.
    */
   const handleScroll = useCallback(() => {
@@ -301,9 +305,10 @@ export default function ScrollablePositionList({ query, variables }: Props) {
     }
 
     if (el.scrollHeight - el.scrollTop - el.clientHeight < 1) {
+      if (positions.length < pageSize) return;
       loadNext();
     }
-  }, [positions.length, loadPrev, loadNext]);
+  }, [positions.length, pageSize, loadPrev, loadNext]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -327,8 +332,8 @@ export default function ScrollablePositionList({ query, variables }: Props) {
         </div>
       )}
 
-      {/* The list of cards, separated by hairline dividers. */}
-      <div className="divide-y divide-slate-100">
+      {/* The list of cards, separated by thin gray borders. */}
+      <div className="divide-y divide-slate-200">
         {positions.map((position) => (
           <PositionListItem key={position.id} position={position} />
         ))}

@@ -1,5 +1,6 @@
 import { CandidatePosition } from '@/lib/graphql/types';
 import { getPartyColor } from '@/lib/party-colors';
+import CandidateAvatar from '@/components/CandidateAvatar';
 
 interface Props {
   position: CandidatePosition;
@@ -29,33 +30,17 @@ function formatDate(dateStr: string): string {
 export default function PositionListItem({ position }: Props) {
   const { candidate, policy_position, date_generated } = position;
 
-  // Look up this party's colour; if the party isn't in our list, use grey.
   const partyColor = getPartyColor(candidate.party);
 
   return (
     <article className="flex gap-4 px-6 py-5 hover:bg-slate-50 transition-colors">
 
-      {/*
-       * Photo column (left side).
-       * To draw a coloured ring around the photo we use two nested circles:
-       * the outer one is filled with the party colour, and the inner one sits
-       * on top with a small gap, creating the ring effect.
-       */}
       <div className="shrink-0">
-        <div
-          className="w-16 h-16 rounded-full p-[3px]"
-          style={{ backgroundColor: partyColor }}
-        >
-          {/* Inner circle: clips the photo to a circle shape. */}
-          <div className="w-full h-full rounded-full overflow-hidden bg-slate-200">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={candidate.small_image_path}
-              alt={candidate.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </div>
+        <CandidateAvatar
+          imagePath={candidate.small_image_path}
+          name={candidate.name}
+          party={candidate.party}
+        />
       </div>
 
       {/* Text column (right side) — stretches to fill the remaining width */}
