@@ -1,6 +1,7 @@
 import { CandidatePosition } from '@/lib/graphql/types';
 import { getPartyColor } from '@/lib/party-colors';
 import CandidateAvatar from '@/components/CandidateAvatar';
+import Link from 'next/link';
 
 interface Props {
   position: CandidatePosition;
@@ -36,11 +37,13 @@ export default function PositionListItem({ position }: Props) {
     <article className="flex gap-4 px-6 py-5 hover:bg-slate-50 transition-colors">
 
       <div className="shrink-0">
-        <CandidateAvatar
-          imagePath={candidate.small_image_path}
-          name={candidate.name}
-          party={candidate.party}
-        />
+        <Link href={`/leaders/${candidate.id}`}>
+          <CandidateAvatar
+            imagePath={candidate.small_image_path}
+            name={candidate.name}
+            party={candidate.party}
+          />
+        </Link>
       </div>
 
       {/* Text column (right side) — stretches to fill the remaining width */}
@@ -53,9 +56,11 @@ export default function PositionListItem({ position }: Props) {
          * party's colour so it stands out at a glance.
          */}
         <div className="flex flex-wrap items-baseline gap-x-2 mb-2">
-          <span className="text-base font-bold text-slate-900 truncate">
-            {candidate.name}
-          </span>
+          <Link href={`/leaders/${candidate.id}`}>
+            <span className="text-base font-bold text-slate-900 truncate">
+              {candidate.name}
+            </span>
+          </Link>
           <span
             className="text-sm font-semibold"
             style={{ color: partyColor }}
@@ -68,10 +73,12 @@ export default function PositionListItem({ position }: Props) {
           </span>
         </div>
 
-        {/* The policy position text — the main content of the card. */}
-        <p className="text-base text-slate-700 leading-relaxed">
-          {policy_position}
-        </p>
+        {/* The policy position text — clicking it opens the full post page. */}
+        <Link href={`/posts/${position.id}`}>
+          <p className="text-base text-slate-700 leading-relaxed whitespace-pre-line hover:text-slate-900 transition-colors">
+            {policy_position}
+          </p>
+        </Link>
 
       </div>
 

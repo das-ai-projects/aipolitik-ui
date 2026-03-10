@@ -3,7 +3,7 @@ import RightSideBar from '@/components/RightSideBar';
 
 const FOR_YOU_QUERY = `
   query SearchCandidatePositions($searchAfter: String, $searchBefore: String, $limit: Int) {
-    searchCandidatePositions(searchAfter: $searchAfter, searchBefore: $searchBefore, limit: $limit) {
+    positions: searchCandidatePositions(searchAfter: $searchAfter, searchBefore: $searchBefore, limit: $limit, sortKey: "score") {
       pageInfo {
         count
         searchAfter
@@ -27,8 +27,8 @@ const FOR_YOU_QUERY = `
 `;
 
 const FOLLOWING_QUERY = `
-  query SearchFollowedCandidatePositions($searchAfter: String, $searchBefore: String, $limit: Int) {
-    searchFollowedCandidatePositions(searchAfter: $searchAfter, searchBefore: $searchBefore, limit: $limit) {
+  query SearchFollowedCandidatePositions($searchAfter: String, $searchBefore: String, $limit: Int, $sortKey: String) {
+    positions: searchFollowedCandidatePositions(searchAfter: $searchAfter, searchBefore: $searchBefore, limit: $limit, sortKey: $sortKey) {
       pageInfo {
         count
         searchAfter
@@ -52,6 +52,7 @@ const FOLLOWING_QUERY = `
 `;
 
 const variables: Record<string, unknown> = { limit: 15 };
+const followingVariables: Record<string, unknown> = { limit: 15, sortKey: 'score' };
 
 export default function HomePage() {
   return (
@@ -61,7 +62,7 @@ export default function HomePage() {
           forYouQuery={FOR_YOU_QUERY}
           forYouVariables={variables}
           followingQuery={FOLLOWING_QUERY}
-          followingVariables={variables}
+          followingVariables={followingVariables}
         />
       </div>
       <RightSideBar />

@@ -5,6 +5,7 @@ import { useApolloClient, useMutation, useQuery } from '@apollo/client/react';
 import { useCallback, useEffect, useState } from 'react';
 import CandidateAvatar from '@/components/CandidateAvatar';
 import type { Candidate } from '@/lib/graphql/types';
+import Link from 'next/link';
 
 const RANDOM_CANDIDATES = gql`
   query RandomCandidates($size: Int) {
@@ -115,16 +116,20 @@ export default function RandomCandidatesFollow() {
             key={`${candidate.id}-${index}`}
             className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
           >
-            <CandidateAvatar
-              imagePath={candidate.small_image_path}
-              name={candidate.name}
-              party={candidate.party}
-              sizeClass="w-10 h-10"
-            />
+            <Link href={`/leaders/${candidate.id}`}>
+              <CandidateAvatar
+                imagePath={candidate.small_image_path}
+                name={candidate.name}
+                party={candidate.party}
+                sizeClass="w-10 h-10"
+              />
+            </Link>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-900 truncate">
-                {candidate.name}
-              </p>
+              <Link href={`/leaders/${candidate.id}`}>
+                <p className="text-sm font-bold text-slate-900 truncate">
+                  {candidate.name}
+                </p>
+              </Link>
               <p className="text-xs text-slate-500 truncate">{candidate.party}</p>
             </div>
             <button

@@ -29,7 +29,6 @@ interface Props {
    * unnecessarily reload when the parent re-renders.
    */
   variables: Record<string, unknown>;
-  dataKey: string;
 }
 
 // ── Spinner ───────────────────────────────────────────────────────────────────
@@ -79,7 +78,7 @@ function Spinner() {
 /** Default page size when not provided in variables (used for "no more pages" check). */
 const DEFAULT_PAGE_SIZE = 15;
 
-export default function ScrollablePositionList({ query, variables, dataKey }: Props) {
+export default function ScrollablePositionList({ query, variables }: Props) {
 
   // ── State ──────────────────────────────────────────────────────────────────
 
@@ -159,7 +158,7 @@ export default function ScrollablePositionList({ query, variables, dataKey }: Pr
    */
   const applyResult = useCallback(
     (data: any, isInitial = false) => {
-      const { edges, pageInfo } = data[dataKey];
+      const { edges, pageInfo } = data.positions;
       const nodes = edges.map((e: any) => e.node);
       setPositions(nodes);
       setSearchAfter(pageInfo.searchAfter);

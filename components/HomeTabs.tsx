@@ -54,10 +54,10 @@ export default function HomeTabs({
 
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === 'for-you' && (
-          <ScrollablePositionList query={forYouQuery} variables={forYouVariables} dataKey="searchCandidatePositions" />
+          <ScrollablePositionList query={forYouQuery} variables={forYouVariables}/>
         )}
         {activeTab === 'following' && (
-          <ScrollablePositionList query={followingQuery} variables={followingVariables} dataKey="searchFollowedCandidatePositions" />
+          <ScrollablePositionList query={followingQuery} variables={followingVariables}/>
         )}
       </div>
     </div>

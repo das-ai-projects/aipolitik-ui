@@ -6,7 +6,7 @@ import RandomCandidatesFollow from '@/components/RandomCandidatesFollow';
 
 export default function RightSideBar() {
   return (
-    <aside className="w-[20%] min-w-[200px] shrink-0 border-l border-slate-200 bg-white flex flex-col">
+    <aside className="w-1/3 min-w-[280px] shrink-0 border-l border-slate-200 bg-white flex flex-col">
       <div className="pt-6 px-4 pb-4">
         <RandomCandidatesFollow />
       </div>
