@@ -12,7 +12,7 @@ const navItems = [
   { label: 'Explore',       href: '/explore',        icon: Compass },
   { label: 'Chats',         href: '/chats',          icon: MessageSquare },
   { label: 'Debates',       href: '/debates',        icon: Scale },
-  { label: 'Party Rosters', href: '/party-rosters',  icon: Users },
+  // { label: 'Party Rosters', href: '/party-rosters',  icon: Users },
 ];
 
 export default function Sidebar() {
@@ -52,13 +52,13 @@ export default function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                'flex items-center gap-3 px-4 py-3 rounded-lg text-xl font-medium transition-colors',
+                'flex items-center gap-4 px-5 py-4 rounded-lg text-2xl font-medium transition-colors',
                 isActive
                   ? 'bg-slate-800 text-emerald-400'
                   : 'text-slate-400 hover:bg-slate-800 hover:text-white'
               )}
             >
-              <Icon className="h-7 w-7 shrink-0" />
+              <Icon className="h-9 w-9 shrink-0" />
               {label}
             </Link>
           );
@@ -69,9 +69,9 @@ export default function Sidebar() {
       <div className="px-2 py-4 border-t border-slate-800">
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-xl font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+          className="flex w-full items-center gap-4 px-5 py-4 rounded-lg text-2xl font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
         >
-          <LogOut className="h-7 w-7 shrink-0" />
+          <LogOut className="h-9 w-9 shrink-0" />
           Log Out
         </button>
       </div>
