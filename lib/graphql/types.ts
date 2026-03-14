@@ -16,6 +16,24 @@ export interface Candidate {
   follow: Follow;
 }
 
+export interface Chat {
+  id: string;
+  user_id: string;
+  candidate: Candidate;
+  last_updated: string;
+}
+
+export interface ChatEdge {
+  node: Chat;
+  token: string;
+  score: number;
+}
+
+export interface ChatResults {
+  edges: ChatEdge[];
+  pageInfo: PageInfo;
+}
+
 export interface CandidatePosition {
   id: string;
   candidate: Candidate;

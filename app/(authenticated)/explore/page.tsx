@@ -139,13 +139,13 @@ export default function ExplorePage() {
           <div className="flex-1 min-h-0">
             {activeTab === 'positions' ? (
               <ScrollablePositionList
-                key={listKey}
+                dataKey="positions"
                 query={POSITIONS_QUERY}
                 variables={listVariables}
               />
             ) : (
               <ScrollableCandidateList
-                key={listKey}
+                dataKey="candidates"
                 query={CANDIDATES_QUERY}
                 variables={listVariables}
               />

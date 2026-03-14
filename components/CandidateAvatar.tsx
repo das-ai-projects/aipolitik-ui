@@ -28,7 +28,7 @@ export default function CandidateAvatar({
 
   return (
     <div
-      className={`shrink-0 rounded-full p-[3px] ${sizeClass}`}
+      className={`shrink-0 rounded-full p-[4px] ${sizeClass}`}
       style={{ backgroundColor: partyColor }}
     >
       <div className="w-full h-full rounded-full overflow-hidden bg-slate-200">
