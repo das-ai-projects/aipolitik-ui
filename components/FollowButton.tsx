@@ -34,7 +34,7 @@ export default function FollowButton({ candidateId, isFollowing, onToggle }: Pro
 
   const [setFollow, { loading }] = useMutation(SET_FOLLOW, {
     onCompleted(data) {
-      onToggle(data.setCandidateFollow.isFollowing);
+      onToggle((data as any).setCandidateFollow.isFollowing);
     },
   });
 

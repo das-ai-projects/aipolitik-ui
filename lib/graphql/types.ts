@@ -19,8 +19,18 @@ export interface Candidate {
 export interface Chat {
   id: string;
   user_id: string;
+  candidate_name: string;
   candidate: Candidate;
   last_updated: string;
+  chatMessages: ChatMessage[];
+}
+
+export interface ChatMessage {
+  id: string;
+  chatId: string;
+  dateGenerated: string;
+  userMessage: string;
+  aiMessage: string;
 }
 
 export interface ChatEdge {
@@ -29,8 +39,19 @@ export interface ChatEdge {
   score: number;
 }
 
+export interface ChatMessageEdge {
+  node: ChatMessage;
+  token: string;
+  score: number;
+}
+
 export interface ChatResults {
   edges: ChatEdge[];
+  pageInfo: PageInfo;
+}
+
+export interface ChatMessageResults {
+  edges: ChatMessageEdge[];
   pageInfo: PageInfo;
 }
 

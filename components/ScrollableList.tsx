@@ -40,6 +40,10 @@ interface Props<T> {
 
   /** Sub-message shown below the main empty message. */
   emptySubMessage?: string;
+
+  /** Called whenever the displayed items change (e.g. after each page load).
+   *  Lets a parent component shadow the current list without owning the state. */
+  onItemsChange?: (items: T[]) => void;
 }
 
 // ── Spinner ───────────────────────────────────────────────────────────────────
@@ -82,6 +86,7 @@ export default function ScrollableList<T>({
   getItemId,
   emptyMessage = "No results found",
   emptySubMessage = "Try a different search",
+  onItemsChange,
 }: Props<T>) {
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -122,6 +127,7 @@ export default function ScrollableList<T>({
       const { edges, pageInfo } = data[dataKey];
       const nodes: T[] = edges.map((e: any) => e.node);
       setItems(nodes);
+      onItemsChange?.(nodes);
       setSearchAfter(pageInfo.searchAfter);
       setSearchBefore(pageInfo.searchBefore);
       if (isInitial) {
@@ -129,7 +135,7 @@ export default function ScrollableList<T>({
         if (nodes.length > 0) initialIdRef.current = getItemId(nodes[0]);
       }
     },
-    [dataKey, getItemId],
+    [dataKey, getItemId, onItemsChange],
   );
 
   // ── Scroll restoration ─────────────────────────────────────────────────────

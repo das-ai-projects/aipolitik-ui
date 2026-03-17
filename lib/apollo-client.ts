@@ -2,6 +2,15 @@ import { ApolloClient, HttpLink, InMemoryCache, from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
+/**
+ * Standard GraphQL-over-HTTP client. Works with any backend that:
+ * - Accepts POST to the given URL with JSON body { query, variables?, operationName? }
+ * - Returns JSON GraphQL response
+ * - Accepts optional "Authorization: Bearer <token>" for auth
+ *
+ * Only NEXT_PUBLIC_GRAPHQL_URL needs to change if the backend endpoint changes
+ * (e.g. API Gateway → Lambda Function URL or ALB).
+ */
 function makeApolloClient() {
   const httpLink = new HttpLink({
     uri: process.env.NEXT_PUBLIC_GRAPHQL_URL,

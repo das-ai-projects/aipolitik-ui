@@ -1,14 +1,18 @@
 'use client';
 
 import { gql } from '@apollo/client';
-import { useQuery } from '@apollo/client/react';
-import { use, useEffect, useRef, useState } from 'react';
+import { useLazyQuery, useMutation, useQuery } from '@apollo/client/react';
+import { use, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { SendHorizonal } from 'lucide-react';
 import Link from 'next/link';
 import CandidateAvatar from '@/components/CandidateAvatar';
+import { useChatsContext } from '@/components/ChatsContext';
+import { ChatMessage } from '@/lib/graphql/types';
 
 // ── GraphQL ───────────────────────────────────────────────────────────────────
 
+// Fetches only the chat metadata and candidate info — no messages here,
+// those are loaded separately via getChatMessages.
 const GET_CHAT = gql`
   query GetChatById($id: String!) {
     getChatById(id: $id) {
@@ -25,17 +29,59 @@ const GET_CHAT = gql`
   }
 `;
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Fetches a page of messages for a chat, sorted newest-first on the server.
+// searchAfter points past the oldest message we currently have, so passing it
+// retrieves the next batch of even older messages.
+const GET_CHAT_MESSAGES = gql`
+  query GetChatMessages($chatId: String!, $limit: Int, $searchAfter: String) {
+    messages: getChatMessages(chatId: $chatId, limit: $limit, searchAfter: $searchAfter) {
+      pageInfo {
+        count
+        searchAfter
+        searchBefore
+      }
+      edges {
+        node {
+          id
+          chatId
+          dateGenerated
+          userMessage
+          aiMessage
+        }
+      }
+    }
+  }
+`;
 
-interface Message {
-  source: 'user' | 'candidate';
-  content: string;
-  timestamp: string;
+const CREATE_CHAT_MESSAGE = gql`
+  mutation CreateChatMessage($chatId: String!, $userMessage: String!) {
+    createChatMessage(chatId: $chatId, userMessage: $userMessage) {
+      id
+      chatId
+      dateGenerated
+      userMessage
+      aiMessage
+    }
+  }
+`;
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const PAGE_LIMIT = 20;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+// Parses **bold** markdown into <strong> elements.
+function parseBoldSegments(text: string): React.ReactNode {
+  const parts = text.split(/\*\*(.+?)\*\*/g);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+  );
 }
 
-// ── Typing indicator ──────────────────────────────────────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
 
-/** Three bouncing dots shown while the candidate's response is being "typed". */
 function TypingIndicator() {
   return (
     <div className="flex items-end gap-2 self-start">
@@ -52,22 +98,20 @@ function TypingIndicator() {
   );
 }
 
-// ── Message bubble ────────────────────────────────────────────────────────────
-
-function MessageBubble({ message }: { message: Message }) {
-  const isUser = message.source === 'user';
+function MessageBubble({ source, content }: { source: 'user' | 'candidate'; content: string }) {
+  const isUser = source === 'user';
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
         className={`
-          max-w-[75%] px-4 py-2.5 text-base leading-relaxed rounded-2xl shadow-sm
+          max-w-[50%] px-4 py-2.5 text-base leading-relaxed rounded-lg shadow-sm whitespace-pre-line
           ${isUser
-            ? 'bg-emerald-500 text-white rounded-br-sm'
-            : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'
+            ? 'bg-emerald-500 text-white rounded-br-none'
+            : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none'
           }
         `}
       >
-        {message.content}
+        {parseBoldSegments(content)}
       </div>
     </div>
   );
@@ -76,63 +120,174 @@ function MessageBubble({ message }: { message: Message }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+  const { id: chatId } = use(params);
 
-  const { data, loading, error } = useQuery(GET_CHAT, { variables: { id } });
-  const chat = (data as any)?.getChatById;
+  // ── Chat metadata ───────────────────────────────────────────────────────────
+
+  const { data: chatData, loading: chatLoading, error: chatError } = useQuery(GET_CHAT, {
+    variables: { id: chatId },
+  });
+  const chat = (chatData as any)?.getChatById;
   const candidate = chat?.candidate;
 
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isWaiting, setIsWaiting] = useState(false);
+  // ── Message state ───────────────────────────────────────────────────────────
+
+  // Accumulated messages, ordered oldest-first for display (bottom = newest).
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  // The cursor returned by the last fetch. Pass it as searchAfter to get
+  // the next batch of older messages (server sorts newest-first, so
+  // searchAfter of the current oldest item yields even older items).
+  const [olderCursor, setOlderCursor] = useState('');
+
+  // False once a fetch returns a partial page or an empty cursor,
+  // meaning we've reached the very first message in the conversation.
+  const [hasMore, setHasMore] = useState(false);
+
+  // True while the load-older request is in flight.
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // The user's message shown optimistically while the mutation is in flight.
+  // Shown as a bubble + typing indicator until the real response arrives.
+  const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null);
+
   const [inputValue, setInputValue] = useState('');
 
-  // Ref to the invisible sentinel at the bottom of the message list —
-  // scrolling it into view keeps the conversation pinned to the bottom.
-  const bottomRef = useRef<HTMLDivElement>(null);
+  // ── Scroll intent ───────────────────────────────────────────────────────────
+
+  // Set before any state update that changes the message list.
+  // useLayoutEffect reads it synchronously before paint and acts accordingly.
+  //   'initial'     → jump to bottom (first page loaded)
+  //   'prepend'     → restore scroll position after older messages are prepended
+  //   'new-message' → jump to bottom (new exchange appended)
+  const scrollIntentRef = useRef<'initial' | 'prepend' | 'new-message' | null>(null);
+
+  // Snapshot of scrollHeight taken just before a prepend, used to compute
+  // how far to offset scrollTop so the view stays anchored to the same content.
+  const savedScrollHeightRef = useRef(0);
+
+  const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Scroll to bottom whenever messages change or the typing indicator appears.
+  // ── Apollo ──────────────────────────────────────────────────────────────────
+
+  const [fetchMessages] = useLazyQuery(GET_CHAT_MESSAGES, { fetchPolicy: 'network-only' });
+  const [createChatMessage, { loading: waitingForResponse }] = useMutation(CREATE_CHAT_MESSAGE);
+  const { notifyMessageSent } = useChatsContext();
+
+  // ── Scroll restoration (runs synchronously before browser paint) ────────────
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    const intent = scrollIntentRef.current;
+    scrollIntentRef.current = null;
+
+    if (!el) return;
+
+    if (intent === 'initial' || intent === 'new-message') {
+      el.scrollTop = el.scrollHeight;
+    } else if (intent === 'prepend') {
+      // Push scrollTop down by however much taller the container became,
+      // keeping the previously visible content in exactly the same position.
+      el.scrollTop = el.scrollHeight - savedScrollHeightRef.current;
+      savedScrollHeightRef.current = 0;
+    }
+  }, [messages, pendingUserMessage]);
+
+  // ── Initial load ─────────────────────────────────────────────────────────────
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isWaiting]);
+    if (!chatId) return;
 
-  function handleSendMessage(message: string) {
-    const trimmed = message.trim();
-    if (!trimmed || isWaiting) return;
+    // Clear previous chat's messages immediately when chatId changes.
+    setMessages([]);
+    setOlderCursor('');
+    setHasMore(false);
+    setPendingUserMessage(null);
 
-    const userMsg: Message = {
-      source: 'user',
-      content: trimmed,
-      timestamp: new Date().toISOString(),
-    };
+    fetchMessages({ variables: { chatId, limit: PAGE_LIMIT } })
+      .then((result) => {
+        if (!result.data) return;
+        const { edges, pageInfo } = (result.data as any).messages;
 
-    // Use the functional form of setMessages so the setTimeout callback
-    // always appends to the latest array, not a stale snapshot.
-    setMessages((prev) => [...prev, userMsg]);
-    setInputValue('');
-    setIsWaiting(true);
+        // Server returns newest-first; reverse so the array is oldest-first.
+        const loaded: ChatMessage[] = edges.map((e: any) => e.node).reverse();
 
-    setTimeout(() => {
-      setIsWaiting(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          source: 'candidate',
-          content: 'This is a test response',
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-    }, 2000);
-  }
+        scrollIntentRef.current = 'initial';
+        setMessages(loaded);
+        setOlderCursor(pageInfo.searchAfter);
+        setHasMore(loaded.length === PAGE_LIMIT && !!pageInfo.searchAfter);
+      })
+      .catch((err: unknown) => {
+        // Ignore aborts — these are expected in React Strict Mode (dev only)
+        // where effects run twice, aborting the first in-flight request.
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('[ChatPage] initial load error:', err);
+        }
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId]);
 
-  function handleSubmit(e: React.FormEvent) {
+  // ── Load older messages ───────────────────────────────────────────────────────
+
+  const loadOlder = useCallback(async () => {
+    if (!hasMore || isLoadingMore || !olderCursor) return;
+
+    setIsLoadingMore(true);
+    // Snapshot scroll height before the DOM changes.
+    savedScrollHeightRef.current = containerRef.current?.scrollHeight ?? 0;
+    scrollIntentRef.current = 'prepend';
+
+    const result = await fetchMessages({
+      variables: { chatId, limit: PAGE_LIMIT, searchAfter: olderCursor },
+    });
+
+    if (result.data) {
+      const { edges, pageInfo } = (result.data as any).messages;
+      const older: ChatMessage[] = edges.map((e: any) => e.node).reverse();
+
+      setMessages((prev) => [...older, ...prev]);
+      setOlderCursor(pageInfo.searchAfter);
+      setHasMore(older.length === PAGE_LIMIT && !!pageInfo.searchAfter);
+    } else {
+      // If the fetch failed, cancel the scroll intent so it doesn't misfire.
+      scrollIntentRef.current = null;
+    }
+
+    setIsLoadingMore(false);
+  }, [chatId, hasMore, isLoadingMore, olderCursor, fetchMessages]);
+
+  // ── Scroll handler ────────────────────────────────────────────────────────────
+
+  const handleScroll = useCallback(() => {
+    const el = containerRef.current;
+    if (!el || isLoadingMore || !hasMore) return;
+    if (el.scrollTop === 0) loadOlder();
+  }, [isLoadingMore, hasMore, loadOlder]);
+
+  // ── Send message ──────────────────────────────────────────────────────────────
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    handleSendMessage(inputValue);
+    const text = inputValue.trim();
+    if (!text || waitingForResponse) return;
+
+    setInputValue('');
+    scrollIntentRef.current = 'new-message';
+    setPendingUserMessage(text);
+
+    const result = await createChatMessage({ variables: { chatId, userMessage: text } });
+    const newMsg: ChatMessage = (result.data as any).createChatMessage;
+
+    scrollIntentRef.current = 'new-message';
+    setMessages((prev) => [...prev, newMsg]);
+    setPendingUserMessage(null);
+    notifyMessageSent(chatId);
   }
 
-  // ── Loading / error ────────────────────────────────────────────────────────
+  // ── Loading / error ───────────────────────────────────────────────────────────
 
-  if (loading) {
+  if (chatLoading) {
     return (
       <div className="flex h-full items-center justify-center text-slate-400 text-sm">
         Loading…
@@ -140,10 +295,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     );
   }
 
-  if (error || !chat) {
+  if (chatError || !chat) {
     return (
       <div className="flex h-full items-center justify-center text-slate-400 text-sm">
-        {error ? `Error: ${error.message}` : 'Chat not found.'}
+        {chatError ? `Error: ${chatError.message}` : 'Chat not found.'}
       </div>
     );
   }
@@ -167,12 +322,30 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       </div>
 
       {/* ── Message area ────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-5 py-4">
-        {/* min-h-full + justify-end pins messages to the bottom of the container
-            when there aren't enough to fill the space, just like a real chat app. */}
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto px-5 py-4"
+      >
         <div className="flex flex-col justify-end min-h-full gap-3">
-          {messages.length === 0 && !isWaiting && (
-            // Empty state — shown before the first message is sent.
+
+          {/* "Beginning of conversation" label — shown once hasMore is false
+              and there is at least one message loaded. */}
+          {!hasMore && messages.length > 0 && (
+            <p className="text-center text-xs text-slate-400 py-2">
+              Beginning of conversation
+            </p>
+          )}
+
+          {/* Loading spinner for older messages */}
+          {isLoadingMore && (
+            <div className="flex justify-center py-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-slate-500" />
+            </div>
+          )}
+
+          {/* Empty state */}
+          {messages.length === 0 && !pendingUserMessage && (
             <div className="flex items-center justify-center text-center px-6 py-8">
               <p className="text-slate-400 text-sm leading-relaxed">
                 Ask {candidate.name} anything about their policies and positions.{' '}
@@ -180,12 +353,22 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               </p>
             </div>
           )}
-          {messages.map((msg, i) => (
-            <MessageBubble key={i} message={msg} />
+
+          {/* Each ChatMessage contains one user turn and one AI turn. */}
+          {messages.map((msg) => (
+            <div key={msg.id} className="flex flex-col gap-3">
+              <MessageBubble source="user" content={msg.userMessage} />
+              <MessageBubble source="candidate" content={msg.aiMessage} />
+            </div>
           ))}
-          {isWaiting && <TypingIndicator />}
-          {/* Invisible sentinel — scrolled into view to keep the bottom visible. */}
-          <div ref={bottomRef} />
+
+          {/* Optimistic user bubble + typing indicator while mutation is in flight. */}
+          {pendingUserMessage && (
+            <>
+              <MessageBubble source="user" content={pendingUserMessage} />
+              <TypingIndicator />
+            </>
+          )}
         </div>
       </div>
 
@@ -197,13 +380,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            disabled={isWaiting}
+            disabled={waitingForResponse}
             placeholder={`Message ${candidate.name}…`}
             className="flex-1 px-4 py-2.5 text-sm rounded-full border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={!inputValue.trim() || isWaiting}
+            disabled={!inputValue.trim() || waitingForResponse}
             className="shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label="Send message"
           >
