@@ -119,12 +119,12 @@ export default function LeaderProfilePage({
     setIsChatLoading(true);
     try {
       const { data: chatData } = await checkChat({ variables: { candidateId: id } });
-      const result = chatData?.getChatByCandidateId;
+      const result = (chatData as any)?.getChatByCandidateId;
       if (result?.chatExists && result.chat?.id) {
         router.push(`/chats/${result.chat.id}`);
       } else {
         const { data: newChat } = await createChat({ variables: { candidateId: id } });
-        router.push(`/chats/${newChat.createChat.id}`);
+        router.push(`/chats/${(newChat as any).createChat.id}`);
       }
     } finally {
       setIsChatLoading(false);
