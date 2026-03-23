@@ -3,11 +3,12 @@
 import { gql } from '@apollo/client';
 import { useLazyQuery, useMutation, useQuery } from '@apollo/client/react';
 import { use, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { SendHorizonal } from 'lucide-react';
+import { SendHorizonal, X } from 'lucide-react';
 import Link from 'next/link';
 import CandidateAvatar from '@/components/CandidateAvatar';
 import { useChatsContext } from '@/components/ChatsContext';
-import { ChatMessage } from '@/lib/graphql/types';
+import PositionListItem from '@/components/PositionListItem';
+import { ChatMessage, CandidatePosition } from '@/lib/graphql/types';
 
 // ── GraphQL ───────────────────────────────────────────────────────────────────
 
@@ -49,6 +50,25 @@ const GET_CHAT_MESSAGES = gql`
           aiMessage
           ids
         }
+      }
+    }
+  }
+`;
+
+const GET_POSITIONS_BY_IDS = gql`
+  query GetCandidatePositionsByIds($ids: [String!]!) {
+    getCandidatePositionsByIds(ids: $ids) {
+      id
+      policy_position
+      policy_category
+      policy_subcategory
+      policy_topic
+      date_generated
+      candidate {
+        id
+        name
+        party
+        small_image_path
       }
     }
   }
@@ -100,17 +120,28 @@ function TypingIndicator() {
   );
 }
 
-function MessageBubble({ source, content, ids }: { source: 'user' | 'candidate'; content: string; ids?: string[] }) {
+function MessageBubble({
+  source, content, ids, onOpenPositions,
+}: {
+  source: 'user' | 'candidate';
+  content: string;
+  ids?: string[];
+  onOpenPositions?: (ids: string[]) => void;
+}) {
   const isUser = source === 'user';
+  const isClickable = !isUser && !!ids?.length && !!onOpenPositions;
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
+        onClick={isClickable ? () => onOpenPositions!(ids!) : undefined}
         className={`
           max-w-[50%] px-4 py-2.5 text-base leading-relaxed rounded-lg shadow-sm whitespace-pre-line
           ${isUser
             ? 'bg-emerald-500 text-white rounded-br-none'
             : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none'
           }
+          ${isClickable ? 'cursor-pointer hover:border-emerald-300 hover:shadow-md transition-shadow' : ''}
         `}
       >
         {parseBoldSegments(content)}
@@ -176,6 +207,24 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [fetchMessages] = useLazyQuery(GET_CHAT_MESSAGES, { fetchPolicy: 'network-only' });
   const [createChatMessage, { loading: waitingForResponse }] = useMutation(CREATE_CHAT_MESSAGE);
   const { notifyMessageSent } = useChatsContext();
+
+  // ── Positions side pane ─────────────────────────────────────────────────────
+
+  const [isPaneOpen, setIsPaneOpen] = useState(false);
+  const [panePositions, setPanePositions] = useState<CandidatePosition[]>([]);
+  const [isPaneLoading, setIsPaneLoading] = useState(false);
+  const [fetchPositions] = useLazyQuery(GET_POSITIONS_BY_IDS, { fetchPolicy: 'network-only' });
+
+  const handleOpenPositions = useCallback(async (ids: string[]) => {
+    console.log('ids', ids);
+    setIsPaneOpen(true);
+    setIsPaneLoading(true);
+    setPanePositions([]);
+    const result = await fetchPositions({ variables: { ids } });
+    const positions: CandidatePosition[] = (result.data as any)?.getCandidatePositionsByIds ?? [];
+    setPanePositions(positions);
+    setIsPaneLoading(false);
+  }, [fetchPositions]);
 
   // ── Scroll restoration (runs synchronously before browser paint) ────────────
 
@@ -308,7 +357,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
+    <div className="relative flex flex-col h-full bg-slate-50">
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="shrink-0 flex flex-col items-center gap-2 pt-5 pb-4 border-b border-slate-200 bg-white">
@@ -360,7 +409,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           {messages.map((msg) => (
             <div key={msg.id} className="flex flex-col gap-3">
               <MessageBubble source="user" content={msg.userMessage} />
-              <MessageBubble source="candidate" content={msg.aiMessage} ids={msg.ids} />
+              <MessageBubble source="candidate" content={msg.aiMessage} ids={msg.ids} onOpenPositions={handleOpenPositions} />
             </div>
           ))}
 
@@ -395,6 +444,55 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             <SendHorizonal size={16} />
           </button>
         </form>
+      </div>
+
+      {/* Transparent backdrop — clicking it closes the pane */}
+      {isPaneOpen && (
+        <div
+          className="absolute inset-0 z-10"
+          onClick={() => setIsPaneOpen(false)}
+        />
+      )}
+
+      {/* ── Positions side pane (absolute overlay, right half) ───────────── */}
+      <div
+        className={`
+          absolute top-0 right-0 h-full w-1/2 z-20
+          flex flex-col bg-white border-l border-slate-200 shadow-xl
+          transition-transform duration-300 ease-in-out
+          ${isPaneOpen ? 'translate-x-0' : 'translate-x-full'}
+        `}
+      >
+        {/* Header */}
+        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-slate-200">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Supporting Positions
+          </span>
+          <button
+            onClick={() => setIsPaneOpen(false)}
+            className="flex items-center justify-center w-7 h-7 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+            aria-label="Close pane"
+          >
+            <X size={15} />
+          </button>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto">
+          {isPaneLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-slate-500" />
+            </div>
+          ) : panePositions.length === 0 ? (
+            <p className="text-xs text-slate-400 text-center px-4 py-6">No supporting positions found.</p>
+          ) : (
+            <div className="flex flex-col divide-y divide-slate-100">
+              {panePositions.map((pos) => (
+                <PositionListItem key={pos.id} position={pos} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
