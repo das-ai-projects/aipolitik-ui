@@ -115,13 +115,19 @@ export default function ChatSidebar({ lastSentChatId, onConsumed }: Props) {
     //    stamp its timestamp so "just now" appears immediately.
     const current = shadowChatsRef.current;
     const idx = current.findIndex((c) => c.id === lastSentChatId);
-    const bumped = idx === -1
-      ? current
-      : [
-          { ...current[idx], last_updated: new Date().toISOString() },
-          ...current.slice(0, idx),
-          ...current.slice(idx + 1),
-        ];
+
+    if (idx === -1) {
+      // New chat not yet in the list — skip animation, force an immediate refetch.
+      setScrollableEpoch((e) => e + 1);
+      onConsumed();
+      return;
+    }
+
+    const bumped = [
+      { ...current[idx], last_updated: new Date().toISOString() },
+      ...current.slice(0, idx),
+      ...current.slice(idx + 1),
+    ];
 
     setAnimatingChats(bumped);
     setIsAnimating(true);

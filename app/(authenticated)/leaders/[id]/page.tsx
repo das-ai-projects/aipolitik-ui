@@ -1,8 +1,10 @@
 'use client';
 
 import { gql } from '@apollo/client';
-import { useQuery } from '@apollo/client/react';
+import { useLazyQuery, useMutation, useQuery } from '@apollo/client/react';
+import { MessageCircle } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { use, useState } from 'react';
 
 import FollowButton from '@/components/FollowButton';
@@ -11,6 +13,21 @@ import ScrollablePositionList from '@/components/ScrollablePositionList';
 import { getPartyColor } from '@/lib/party-colors';
 
 // ── GraphQL ───────────────────────────────────────────────────────────────────
+
+const GET_CHAT_BY_CANDIDATE = gql`
+  query GetChatByCandidateId($candidateId: String!) {
+    getChatByCandidateId(candidateId: $candidateId) {
+      chatExists
+      chat { id }
+    }
+  }
+`;
+
+const CREATE_CHAT = gql`
+  mutation CreateChat($candidateId: String!) {
+    createChat(candidateId: $candidateId) { id }
+  }
+`;
 
 const GET_CANDIDATE = gql`
   query GetCandidateById($id: String!) {
@@ -80,6 +97,7 @@ export default function LeaderProfilePage({
 }) {
   // Unwrap the route params (Next.js 15+ passes params as a Promise).
   const { id } = use(params);
+  const router = useRouter();
 
   const { data, loading, error } = useQuery(GET_CANDIDATE, {
     variables: { id },
@@ -91,6 +109,27 @@ export default function LeaderProfilePage({
   // Local copy of follow state so the button updates instantly without
   // waiting for a full refetch.
   const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
+
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [checkChat] = useLazyQuery(GET_CHAT_BY_CANDIDATE, { fetchPolicy: 'network-only' });
+  const [createChat] = useMutation(CREATE_CHAT);
+
+  async function handleOpenChat() {
+    if (isChatLoading) return;
+    setIsChatLoading(true);
+    try {
+      const { data: chatData } = await checkChat({ variables: { candidateId: id } });
+      const result = chatData?.getChatByCandidateId;
+      if (result?.chatExists && result.chat?.id) {
+        router.push(`/chats/${result.chat.id}`);
+      } else {
+        const { data: newChat } = await createChat({ variables: { candidateId: id } });
+        router.push(`/chats/${newChat.createChat.id}`);
+      }
+    } finally {
+      setIsChatLoading(false);
+    }
+  }
 
   const candidate = (data as any)?.candidate;
 
@@ -160,8 +199,16 @@ export default function LeaderProfilePage({
               </div>
             </div>
 
-            {/* Follow button — top-right of the profile row */}
-            <div className="flex justify-end pt-3 pb-2">
+            {/* Action buttons — top-right of the profile row */}
+            <div className="flex justify-end items-center gap-2 pt-3 pb-2">
+              <button
+                onClick={handleOpenChat}
+                disabled={isChatLoading}
+                className="flex items-center justify-center w-11 h-11 rounded-full border border-slate-200 text-slate-600 hover:bg-emerald-500 hover:border-emerald-500 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label="Open chat"
+              >
+                <MessageCircle size={20} />
+              </button>
               <FollowButton
                 candidateId={candidate.id}
                 isFollowing={followState}
