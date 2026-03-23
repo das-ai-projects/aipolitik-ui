@@ -47,6 +47,7 @@ const GET_CHAT_MESSAGES = gql`
           dateGenerated
           userMessage
           aiMessage
+          ids
         }
       }
     }
@@ -61,6 +62,7 @@ const CREATE_CHAT_MESSAGE = gql`
       dateGenerated
       userMessage
       aiMessage
+      ids
     }
   }
 `;
@@ -98,7 +100,7 @@ function TypingIndicator() {
   );
 }
 
-function MessageBubble({ source, content }: { source: 'user' | 'candidate'; content: string }) {
+function MessageBubble({ source, content, ids }: { source: 'user' | 'candidate'; content: string; ids?: string[] }) {
   const isUser = source === 'user';
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -358,7 +360,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           {messages.map((msg) => (
             <div key={msg.id} className="flex flex-col gap-3">
               <MessageBubble source="user" content={msg.userMessage} />
-              <MessageBubble source="candidate" content={msg.aiMessage} />
+              <MessageBubble source="candidate" content={msg.aiMessage} ids={msg.ids} />
             </div>
           ))}
 

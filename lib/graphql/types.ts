@@ -31,6 +31,7 @@ export interface ChatMessage {
   dateGenerated: string;
   userMessage: string;
   aiMessage: string;
+  ids: string[];
 }
 
 export interface ChatEdge {
