@@ -2,11 +2,12 @@
 
 import { gql } from '@apollo/client';
 import { useLazyQuery } from '@apollo/client/react';
-import { Search, X } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { Pencil, Search, X } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import ChatListItem from '@/components/ChatListItem';
+import { useChatsContext } from '@/components/ChatsContext';
 import ScrollableList from '@/components/ScrollableList';
 import { Chat } from '@/lib/graphql/types';
 
@@ -46,6 +47,13 @@ interface Props {
 
 export default function ChatSidebar({ lastSentChatId, onConsumed }: Props) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { openNewChat } = useChatsContext();
+
+  function handleNewChat() {
+    openNewChat();
+    router.push('/chats');
+  }
 
   // Raw search input value.
   const [searchTerm, setSearchTerm] = useState('');
@@ -197,7 +205,16 @@ export default function ChatSidebar({ lastSentChatId, onConsumed }: Props) {
 
       {/* Header */}
       <div className="shrink-0 px-4 pt-4 pb-3 border-b border-slate-200 space-y-3">
-        <h2 className="text-lg font-bold text-slate-900 px-1">Chats</h2>
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-lg font-bold text-slate-900">Chats</h2>
+          <button
+            onClick={handleNewChat}
+            className="flex items-center justify-center w-8 h-8 rounded-full text-slate-500 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+            aria-label="New chat"
+          >
+            <Pencil size={15} />
+          </button>
+        </div>
 
         <div className="relative">
           <Search

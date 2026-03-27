@@ -6,16 +6,18 @@ import { ChatsContext } from '@/components/ChatsContext';
 import ChatSidebar from '@/components/ChatSidebar';
 
 export default function ChatsLayout({ children }: { children: React.ReactNode }) {
-  // When a message is sent in ChatPage, it stores the chat ID here.
-  // ChatSidebar reads it to reorder the list and clears it via onConsumed.
   const [lastSentChatId, setLastSentChatId] = useState<string | null>(null);
+  const [isNewChatMode, setIsNewChatMode] = useState(false);
 
   const notifyMessageSent = useCallback((chatId: string) => {
     setLastSentChatId(chatId);
   }, []);
 
+  const openNewChat = useCallback(() => setIsNewChatMode(true), []);
+  const closeNewChat = useCallback(() => setIsNewChatMode(false), []);
+
   return (
-    <ChatsContext.Provider value={{ notifyMessageSent }}>
+    <ChatsContext.Provider value={{ notifyMessageSent, isNewChatMode, openNewChat, closeNewChat }}>
       <div className="flex h-full overflow-hidden">
         <ChatSidebar
           lastSentChatId={lastSentChatId}
