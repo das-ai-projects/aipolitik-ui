@@ -31,6 +31,15 @@ const SEARCH_CHATS_GQL = gql`
   }
 `;
 
+const GET_LATEST_CHATS_GQL = gql`
+  query GetChatsLatest {
+    chats: getChats(limit: 25) {
+      pageInfo { count searchBefore searchAfter }
+      edges { score node { id user_id last_updated candidate { id name small_image_path } } }
+    }
+  }
+`;
+
 // Stable empty object so ScrollableList's default mode never remounts
 // spuriously due to a new variable reference.
 const DEFAULT_VARIABLES: Record<string, unknown> = {};
@@ -73,6 +82,8 @@ export default function ChatSidebar({ lastSentChatId, onConsumed }: Props) {
 
   // Search results fetched via searchChats.
   const [searchResults, setSearchResults] = useState<Chat[]>([]);
+  // Freshly refetched chats shown briefly after sending a message.
+  const [refreshedChats, setRefreshedChats] = useState<Chat[] | null>(null);
 
   // A counter incremented to give ScrollableList a new key, forcing it to
   // remount and re-fetch from the server after the animation finishes.
@@ -94,13 +105,15 @@ export default function ChatSidebar({ lastSentChatId, onConsumed }: Props) {
   const isSearching = debouncedTerm.length >= 3;
 
   const [runSearch] = useLazyQuery(SEARCH_CHATS_GQL, { fetchPolicy: 'network-only' });
+  const [runGetLatestChats] = useLazyQuery(GET_LATEST_CHATS_GQL, { fetchPolicy: 'network-only' });
 
   useEffect(() => {
     if (!isSearching) return;
     runSearch({ variables: { query: debouncedTerm } })
       .then((result) => {
         if (result.data) {
-          setSearchResults(result.data.chats.edges.map((e: any) => e.node));
+          const payload = result.data as any;
+          setSearchResults(payload.chats.edges.map((e: any) => e.node));
         }
       })
       .catch((err: unknown) => {
@@ -124,30 +137,46 @@ export default function ChatSidebar({ lastSentChatId, onConsumed }: Props) {
     const current = shadowChatsRef.current;
     const idx = current.findIndex((c) => c.id === lastSentChatId);
 
-    if (idx === -1) {
-      // New chat not yet in the list — skip animation, force an immediate refetch.
-      setScrollableEpoch((e) => e + 1);
-      onConsumed();
-      return;
+    if (idx !== -1) {
+      const bumped = [
+        { ...current[idx], last_updated: new Date().toISOString() },
+        ...current.slice(0, idx),
+        ...current.slice(idx + 1),
+      ];
+      setAnimatingChats(bumped);
+      setIsAnimating(true);
+      setHighlightedId(lastSentChatId);
     }
 
-    const bumped = [
-      { ...current[idx], last_updated: new Date().toISOString() },
-      ...current.slice(0, idx),
-      ...current.slice(idx + 1),
-    ];
-
-    setAnimatingChats(bumped);
-    setIsAnimating(true);
-    setHighlightedId(lastSentChatId);
-
-    // 3. After the animation, hand back to ScrollableList (new epoch forces
-    //    a fresh fetch so the server-authoritative order takes over).
+    // 3. Always fetch latest chats after a send; keep the just-updated chat at top.
     const t = setTimeout(() => {
-      setHighlightedId(null);
-      setIsAnimating(false);
-      setScrollableEpoch((e) => e + 1);
-    }, 1200);
+      runGetLatestChats()
+        .then((result) => {
+          const payload = result.data as any;
+          if (!payload?.chats?.edges) {
+            setScrollableEpoch((e) => e + 1);
+            return;
+          }
+          const latest = payload.chats.edges.map((e: any) => e.node) as Chat[];
+          const sentIdx = latest.findIndex((c) => c.id === lastSentChatId);
+          const ordered =
+            sentIdx === -1
+              ? latest
+              : [latest[sentIdx], ...latest.slice(0, sentIdx), ...latest.slice(sentIdx + 1)];
+          setRefreshedChats(ordered);
+          setTimeout(() => {
+            setRefreshedChats(null);
+            setHighlightedId(null);
+            setIsAnimating(false);
+            setScrollableEpoch((e) => e + 1);
+          }, 800);
+        })
+        .catch(() => {
+          setHighlightedId(null);
+          setIsAnimating(false);
+          setScrollableEpoch((e) => e + 1);
+        });
+    }, idx === -1 ? 0 : 1200);
 
     onConsumed();
     return () => clearTimeout(t);
@@ -245,6 +274,9 @@ export default function ChatSidebar({ lastSentChatId, onConsumed }: Props) {
         {isAnimating ? (
           // Post-send: show locally-reordered list with slide-in animation.
           <LocalList chats={animatingChats} />
+        ) : refreshedChats ? (
+          // Freshly fetched list after send, with sent chat pinned to top.
+          <LocalList chats={refreshedChats} />
         ) : isSearching ? (
           // Active search: show results from searchChats.
           <LocalList chats={searchResults} />

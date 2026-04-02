@@ -132,7 +132,8 @@ export default function ChatsPage() {
     const t = setTimeout(() => {
       searchCandidates({ variables: { query: inputValue, limit: 6 } }).then((result) => {
         if (result.data) {
-          setDropdownCandidates(result.data.candidates.edges.map((e: any) => e.node));
+          const payload = result.data as any;
+          setDropdownCandidates(payload.candidates.edges.map((e: any) => e.node));
         }
       });
     }, 150);
@@ -146,7 +147,8 @@ export default function ChatsPage() {
     setDropdownCandidates([]);
     const result = await searchCandidates({ variables: { query: q, limit: 20 } });
     if (result.data) {
-      setFullResults(result.data.candidates.edges.map((e: any) => e.node));
+      const payload = result.data as any;
+      setFullResults(payload.candidates.edges.map((e: any) => e.node));
     }
     setHasSearched(true);
   }
@@ -156,14 +158,14 @@ export default function ChatsPage() {
     setLoadingCandidateId(candidateId);
     try {
       const { data } = await checkChat({ variables: { candidateId } });
-      const result = data?.getChatByCandidateId;
+      const result = (data as any)?.getChatByCandidateId;
       if (result?.chatExists && result.chat?.id) {
         closeNewChat();
         router.push(`/chats/${result.chat.id}`);
       } else {
         const { data: newChat } = await createChat({ variables: { candidateId } });
         closeNewChat();
-        router.push(`/chats/${newChat.createChat.id}`);
+        router.push(`/chats/${(newChat as any).createChat.id}`);
       }
     } finally {
       setLoadingCandidateId(null);
