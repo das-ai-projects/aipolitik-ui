@@ -3,6 +3,7 @@
 import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import { useState } from 'react';
+import { useTranslatedText } from '@/components/LanguagePreferenceContext';
 
 const SET_FOLLOW = gql`
   mutation SetCandidateFollow($candidateId: String!, $follow: Boolean!) {
@@ -31,6 +32,9 @@ interface Props {
  */
 export default function FollowButton({ candidateId, isFollowing, onToggle }: Props) {
   const [hovering, setHovering] = useState(false);
+  const tFollow = useTranslatedText('Follow');
+  const tFollowing = useTranslatedText('Following');
+  const tUnfollow = useTranslatedText('Unfollow');
 
   const [setFollow, { loading }] = useMutation(SET_FOLLOW, {
     onCompleted(data) {
@@ -47,14 +51,14 @@ export default function FollowButton({ candidateId, isFollowing, onToggle }: Pro
 
   if (isFollowing) {
     if (hovering) {
-      label = 'Unfollow';
+      label = tUnfollow;
       className = 'bg-red-500 hover:bg-red-600 text-white border border-red-500';
     } else {
-      label = 'Following';
+      label = tFollowing;
       className = 'bg-emerald-500 hover:bg-emerald-600 text-white border border-emerald-500';
     }
   } else {
-    label = 'Follow';
+    label = tFollow;
     className = 'bg-transparent text-emerald-600 border border-emerald-500 hover:bg-emerald-50';
   }
 

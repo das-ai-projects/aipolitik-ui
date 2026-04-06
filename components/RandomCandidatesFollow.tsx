@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import CandidateAvatar from '@/components/CandidateAvatar';
 import type { Candidate } from '@/lib/graphql/types';
 import Link from 'next/link';
+import { useTranslatedText } from '@/components/LanguagePreferenceContext';
 
 const RANDOM_CANDIDATES = gql`
   query RandomCandidates($size: Int) {
@@ -30,6 +31,47 @@ const SET_CANDIDATE_FOLLOW = gql`
 const LIST_SIZE = 5;
 const REPLACEMENT_SIZE = 1;
 
+function RandomFollowRow({
+  candidate,
+  index,
+  followLoading,
+  onFollow,
+}: {
+  candidate: Candidate;
+  index: number;
+  followLoading: boolean;
+  onFollow: (index: number) => void;
+}) {
+  const displayParty = useTranslatedText(candidate.party ?? '');
+  const followLabel = useTranslatedText('Follow');
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
+      <Link href={`/leaders/${candidate.id}`}>
+        <CandidateAvatar
+          imagePath={candidate.small_image_path}
+          name={candidate.name}
+          party={candidate.party}
+          sizeClass="w-10 h-10"
+        />
+      </Link>
+      <div className="flex-1 min-w-0">
+        <Link href={`/leaders/${candidate.id}`}>
+          <p className="text-sm font-bold text-slate-900 truncate">{candidate.name}</p>
+        </Link>
+        <p className="text-xs text-slate-500 truncate">{displayParty}</p>
+      </div>
+      <button
+        type="button"
+        onClick={() => onFollow(index)}
+        disabled={followLoading}
+        className="shrink-0 rounded-full bg-emerald-500 text-slate-200 px-4 py-1.5 text-sm font-bold hover:bg-emerald-600 disabled:opacity-50 transition-colors"
+      >
+        {followLabel}
+      </button>
+    </div>
+  );
+}
+
 export default function RandomCandidatesFollow() {
   const client = useApolloClient();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -41,6 +83,9 @@ export default function RandomCandidatesFollow() {
       fetchPolicy: 'network-only',
     }
   );
+
+  const whoToFollow = useTranslatedText('Who to follow');
+  const loadingAria = useTranslatedText('Loading');
 
   const [setFollow, { loading: followLoading }] = useMutation(
     SET_CANDIDATE_FOLLOW,
@@ -87,13 +132,13 @@ export default function RandomCandidatesFollow() {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-200">
-          <h2 className="text-base font-bold text-slate-900">Who to follow</h2>
+          <h2 className="text-base font-bold text-slate-900">{whoToFollow}</h2>
         </div>
         <div className="flex justify-center py-8">
           <div
             className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-slate-500"
             role="status"
-            aria-label="Loading"
+            aria-label={loadingAria}
           />
         </div>
       </div>
@@ -107,40 +152,18 @@ export default function RandomCandidatesFollow() {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
       <div className="px-4 py-3 border-b border-slate-200">
-        <h2 className="text-base font-bold text-slate-900">Who to follow</h2>
+        <h2 className="text-base font-bold text-slate-900">{whoToFollow}</h2>
       </div>
 
       <div className="py-2">
         {candidates.map((candidate, index) => (
-          <div
+          <RandomFollowRow
             key={`${candidate.id}-${index}`}
-            className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
-          >
-            <Link href={`/leaders/${candidate.id}`}>
-              <CandidateAvatar
-                imagePath={candidate.small_image_path}
-                name={candidate.name}
-                party={candidate.party}
-                sizeClass="w-10 h-10"
-              />
-            </Link>
-            <div className="flex-1 min-w-0">
-              <Link href={`/leaders/${candidate.id}`}>
-                <p className="text-sm font-bold text-slate-900 truncate">
-                  {candidate.name}
-                </p>
-              </Link>
-              <p className="text-xs text-slate-500 truncate">{candidate.party}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => handleFollow(index)}
-              disabled={followLoading}
-              className="shrink-0 rounded-full bg-emerald-500 text-slate-200 px-4 py-1.5 text-sm font-bold hover:bg-emerald-600 disabled:opacity-50 transition-colors"
-            >
-              Follow
-            </button>
-          </div>
+            candidate={candidate}
+            index={index}
+            followLoading={followLoading}
+            onFollow={handleFollow}
+          />
         ))}
       </div>
     </div>

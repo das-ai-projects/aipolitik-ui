@@ -4,20 +4,47 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'aws-amplify/auth';
-import { Home, Compass, MessageSquare, Scale, Users, LogOut } from 'lucide-react';
+import { Home, Compass, MessageSquare, Scale, LogOut, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslatedText } from '@/components/LanguagePreferenceContext';
 
-const navItems = [
-  { label: 'Home',          href: '/home',          icon: Home },
-  { label: 'Explore',       href: '/explore',        icon: Compass },
-  { label: 'Chats',         href: '/chats',          icon: MessageSquare },
-  { label: 'Debates',       href: '/debates',        icon: Scale },
-  // { label: 'Party Rosters', href: '/party-rosters',  icon: Users },
-];
+const navDefs = [
+  { labelKey: 'Home', href: '/home', icon: Home },
+  { labelKey: 'Explore', href: '/explore', icon: Compass },
+  { labelKey: 'Chats', href: '/chats', icon: MessageSquare },
+  { labelKey: 'Debates', href: '/debates', icon: Scale },
+  { labelKey: 'Settings', href: '/settings', icon: Settings },
+] as const;
+
+function SidebarNavItem({
+  href,
+  labelKey,
+  Icon,
+}: {
+  href: string;
+  labelKey: string;
+  Icon: typeof Home;
+}) {
+  const pathname = usePathname();
+  const label = useTranslatedText(labelKey);
+  const isActive = pathname === href || pathname.startsWith(href + '/');
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'flex items-center gap-4 px-5 py-4 rounded-lg text-2xl font-medium transition-colors',
+        isActive ? 'bg-slate-800 text-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+      )}
+    >
+      <Icon className="h-9 w-9 shrink-0" />
+      {label}
+    </Link>
+  );
+}
 
 export default function Sidebar() {
-  const pathname = usePathname();
   const router = useRouter();
+  const logOutLabel = useTranslatedText('Log Out');
 
   const handleLogout = async () => {
     try {
@@ -45,24 +72,9 @@ export default function Sidebar() {
 
       {/* Nav links */}
       <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
-        {navItems.map(({ label, href, icon: Icon }) => {
-          const isActive = pathname === href || pathname.startsWith(href + '/');
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                'flex items-center gap-4 px-5 py-4 rounded-lg text-2xl font-medium transition-colors',
-                isActive
-                  ? 'bg-slate-800 text-emerald-400'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-              )}
-            >
-              <Icon className="h-9 w-9 shrink-0" />
-              {label}
-            </Link>
-          );
-        })}
+        {navDefs.map(({ labelKey, href, icon: Icon }) => (
+          <SidebarNavItem key={href} href={href} labelKey={labelKey} Icon={Icon} />
+        ))}
       </nav>
 
       {/* Logout */}
@@ -72,7 +84,7 @@ export default function Sidebar() {
           className="flex w-full items-center gap-4 px-5 py-4 rounded-lg text-2xl font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
         >
           <LogOut className="h-9 w-9 shrink-0" />
-          Log Out
+          {logOutLabel}
         </button>
       </div>
 

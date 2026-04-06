@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ScrollablePositionList from '@/components/ScrollablePositionList';
 import { cn } from '@/lib/utils';
+import { useTranslatedText } from '@/components/LanguagePreferenceContext';
 
 type TabId = 'for-you' | 'following';
 
@@ -20,6 +21,8 @@ export default function HomeTabs({
   followingVariables,
 }: HomeTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('for-you');
+  const forYouLabel = useTranslatedText('For you');
+  const followingLabel = useTranslatedText('Following');
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -35,7 +38,7 @@ export default function HomeTabs({
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             )}
           >
-            For you
+            {forYouLabel}
           </button>
           <button
             type="button"
@@ -47,7 +50,7 @@ export default function HomeTabs({
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             )}
           >
-            Following
+            {followingLabel}
           </button>
         </div>
       </div>

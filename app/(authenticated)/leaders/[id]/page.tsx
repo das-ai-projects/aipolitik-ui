@@ -11,6 +11,34 @@ import FollowButton from '@/components/FollowButton';
 import RightSideBar from '@/components/RightSideBar';
 import ScrollablePositionList from '@/components/ScrollablePositionList';
 import { getPartyColor } from '@/lib/party-colors';
+import { useTranslatedText } from '@/components/LanguagePreferenceContext';
+
+function LeaderCategoryTab({
+  category,
+  active,
+  onSelect,
+}: {
+  category: string;
+  active: boolean;
+  onSelect: (c: string) => void;
+}) {
+  const label = useTranslatedText(category);
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(category)}
+      className={`
+                      shrink-0 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2
+                      ${active
+                        ? 'border-emerald-500 text-emerald-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+                      }
+                    `}
+    >
+      {label}
+    </button>
+  );
+}
 
 // ── GraphQL ───────────────────────────────────────────────────────────────────
 
@@ -114,6 +142,15 @@ export default function LeaderProfilePage({
   const [checkChat] = useLazyQuery(GET_CHAT_BY_CANDIDATE, { fetchPolicy: 'network-only' });
   const [createChat] = useMutation(CREATE_CHAT);
 
+  const candidate = (data as any)?.candidate;
+  const loadingLabel = useTranslatedText('Loading…');
+  const candidateNotFound = useTranslatedText('Candidate not found.');
+  const errorPrefix = useTranslatedText('Error:');
+  const bannerAlt = useTranslatedText('AiPolitik banner');
+  const openChatAria = useTranslatedText('Open chat');
+  const displayParty = useTranslatedText(candidate?.party ?? '');
+  const displayBio = useTranslatedText(candidate?.bio ?? '');
+
   async function handleOpenChat() {
     if (isChatLoading) return;
     setIsChatLoading(true);
@@ -131,8 +168,6 @@ export default function LeaderProfilePage({
     }
   }
 
-  const candidate = (data as any)?.candidate;
-
   // Initialise local follow state from the server once data arrives.
   const followState =
     isFollowing !== null ? isFollowing : candidate?.follow?.isFollowing ?? false;
@@ -144,7 +179,7 @@ export default function LeaderProfilePage({
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center text-slate-400 text-sm">
-        Loading…
+        {loadingLabel}
       </div>
     );
   }
@@ -152,7 +187,7 @@ export default function LeaderProfilePage({
   if (error || !candidate) {
     return (
       <div className="flex h-full items-center justify-center text-slate-400 text-sm">
-        {error ? `Error: ${error.message}` : 'Candidate not found.'}
+        {error ? `${errorPrefix} ${error.message}` : candidateNotFound}
       </div>
     );
   }
@@ -172,7 +207,7 @@ export default function LeaderProfilePage({
           <div className="relative w-full h-40 sm:h-52 bg-slate-200">
             <Image
               src="https://ddk4x72zkug5e.cloudfront.net/logo_images/banner_placeholder.png"
-              alt="AiPolitik banner"
+              alt={bannerAlt}
               fill
               className="object-cover"
               priority
@@ -205,7 +240,7 @@ export default function LeaderProfilePage({
                 onClick={handleOpenChat}
                 disabled={isChatLoading}
                 className="flex items-center justify-center w-11 h-11 rounded-full border border-slate-200 text-slate-600 hover:bg-emerald-500 hover:border-emerald-500 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                aria-label="Open chat"
+                aria-label={openChatAria}
               >
                 <MessageCircle size={20} />
               </button>
@@ -226,11 +261,11 @@ export default function LeaderProfilePage({
               className="text-sm font-semibold mt-0.5"
               style={{ color: partyColor }}
             >
-              {candidate.party}
+              {displayParty}
             </p>
             {candidate.bio && (
               <p className="mt-3 text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                {candidate.bio}
+                {displayBio}
               </p>
             )}
           </div>
@@ -238,24 +273,14 @@ export default function LeaderProfilePage({
           {/* ── Category tabs ─────────────────────────────────────────────── */}
           <div className="mt-2 border-b border-slate-200">
             <div className="flex overflow-x-auto scrollbar-hide px-5 gap-1">
-              {CATEGORIES.map((cat) => {
-                const active = cat === currentCategory;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => setCurrentCategory(cat)}
-                    className={`
-                      shrink-0 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2
-                      ${active
-                        ? 'border-emerald-500 text-emerald-600'
-                        : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
-                      }
-                    `}
-                  >
-                    {cat}
-                  </button>
-                );
-              })}
+              {CATEGORIES.map((cat) => (
+                <LeaderCategoryTab
+                  key={cat}
+                  category={cat}
+                  active={cat === currentCategory}
+                  onSelect={setCurrentCategory}
+                />
+              ))}
             </div>
           </div>
         </div>

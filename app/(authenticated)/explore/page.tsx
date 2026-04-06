@@ -1,11 +1,17 @@
 'use client';
 
-import { Search } from 'lucide-react';
+import { useMutation } from '@apollo/client/react';
+import { Loader2, Search } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import RightSideBar from '@/components/RightSideBar';
 import ScrollableCandidateList from '@/components/ScrollableCandidateList';
 import ScrollablePositionList from '@/components/ScrollablePositionList';
+import {
+  useLanguagePreference,
+  useTranslatedText,
+} from '@/components/LanguagePreferenceContext';
+import { TRANSLATE_SEARCH_QUERIES } from '@/lib/graphql/languagePreference';
 import { cn } from '@/lib/utils';
 
 // ── Queries ───────────────────────────────────────────────────────────────────
@@ -50,26 +56,59 @@ const CANDIDATES_QUERY = `
 
 type Tab = 'positions' | 'leaders';
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'positions', label: 'Positions' },
-  { id: 'leaders', label: 'Leaders' },
-];
+const TAB_IDS: Tab[] = ['positions', 'leaders'];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ExplorePage() {
+  const { preferredLanguage } = useLanguagePreference();
+  const [translateSearchQueries] = useMutation<{
+    translateSearchQueries: string[];
+  }>(TRANSLATE_SEARCH_QUERIES);
+
   const [activeTab, setActiveTab] = useState<Tab>('positions');
   const [inputValue, setInputValue] = useState('');
   const [submittedQuery, setSubmittedQuery] = useState('');
   const [listVariables, setListVariables] = useState<Record<string, unknown> | null>(null);
+  const [searchPreparing, setSearchPreparing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  /** Raw user query → English search string (only used when preferredLanguage !== EN). */
+  const queryToEnglishCache = useRef<Map<string, string>>(new Map());
 
-  function handleSubmit(e: React.FormEvent) {
+  const labelPositions = useTranslatedText('Positions');
+  const labelLeaders = useTranslatedText('Leaders');
+  const phPositions = useTranslatedText('Search positions…');
+  const phLeaders = useTranslatedText('Search leaders…');
+  const searchLabel = useTranslatedText('Search');
+  const hintPositions = useTranslatedText('Search for positions by keyword');
+  const hintLeaders = useTranslatedText('Search for leaders by name or party');
+  const tabLabel = (id: Tab) => (id === 'positions' ? labelPositions : labelLeaders);
+  const placeholder = activeTab === 'positions' ? phPositions : phLeaders;
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const q = inputValue.trim();
-    if (!q) return;
-    setSubmittedQuery(q);
-    setListVariables({ query: q });
+    if (!q || searchPreparing) return;
+
+    setSearchPreparing(true);
+    try {
+      let searchQuery = q;
+      if (preferredLanguage !== 'EN') {
+        const cached = queryToEnglishCache.current.get(q);
+        if (cached !== undefined) {
+          searchQuery = cached;
+        } else {
+          const { data } = await translateSearchQueries({ variables: { texts: [q] } });
+          const out = data?.translateSearchQueries?.[0]?.trim();
+          searchQuery = out && out.length > 0 ? out : q;
+          queryToEnglishCache.current.set(q, searchQuery);
+        }
+      }
+      setSubmittedQuery(q);
+      setListVariables({ query: searchQuery });
+    } finally {
+      setSearchPreparing(false);
+    }
   }
 
   // Unique key so switching tab with the same query still remounts the list.
@@ -97,34 +136,40 @@ export default function ExplorePage() {
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder={activeTab === 'positions' ? 'Search positions…' : 'Search leaders…'}
-                className="w-full pl-9 pr-4 py-2 text-sm rounded-full border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition"
+                disabled={searchPreparing}
+                placeholder={placeholder}
+                className="w-full pl-9 pr-4 py-2 text-sm rounded-full border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition disabled:opacity-50"
               />
             </div>
             <button
               type="submit"
-              disabled={!inputValue.trim()}
-              className="px-5 py-2 text-sm font-semibold rounded-full bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              disabled={!inputValue.trim() || searchPreparing}
+              aria-busy={searchPreparing}
+              className="px-5 py-2 text-sm font-semibold rounded-full bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center gap-2 min-w-[5.5rem]"
             >
-              Search
+              {searchPreparing ? (
+                <Loader2 size={16} className="animate-spin" aria-hidden />
+              ) : null}
+              {searchLabel}
             </button>
           </form>
           <div className="h-6" />
           {/* Tab bar */}
           <div className="shrink-0 border-b border-slate-200 bg-white">
             <div className="flex">
-              {TABS.map((tab) => (
+              {TAB_IDS.map((id) => (
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  key={id}
+                  type="button"
+                  onClick={() => setActiveTab(id)}
                   className={cn(
                     'w-1/2 py-5 text-center text-xl font-bold transition-colors border-b-4 -mb-1',
-                    activeTab === tab.id
+                    activeTab === id
                       ? 'border-emerald-500 text-emerald-600'
                       : 'border-transparent text-slate-500 hover:text-slate-700'
                   )}
                 >
-                  {tab.label}
+                  {tabLabel(id)}
                 </button>
               ))} 
             </div>
@@ -157,7 +202,7 @@ export default function ExplorePage() {
           <div className="flex-1 flex flex-col items-center justify-center gap-2 text-slate-400">
             <Search size={32} strokeWidth={1.5} />
             <p className="text-sm">
-              {activeTab === 'positions' ? 'Search for positions by keyword' : 'Search for leaders by name or party'}
+              {activeTab === 'positions' ? hintPositions : hintLeaders}
             </p>
           </div>
         )}

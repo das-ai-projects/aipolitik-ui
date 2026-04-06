@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 import FollowButton from '@/components/FollowButton';
 import { getPartyColor } from '@/lib/party-colors';
+import { useTranslatedText } from '@/components/LanguagePreferenceContext';
 
 interface Props {
   candidate: any;
@@ -14,6 +15,8 @@ interface Props {
 export default function CandidateListItem({ candidate }: Props) {
   // Local follow state so the button updates instantly on click.
   const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
+  const displayParty = useTranslatedText(candidate.party ?? '');
+  const displayBio = useTranslatedText(candidate.bio ?? '');
 
   const partyColor = getPartyColor(candidate.party);
   const followState =
@@ -56,11 +59,11 @@ export default function CandidateListItem({ candidate }: Props) {
           {candidate.name}
         </p>
         <p className="text-sm font-semibold mt-0.5" style={{ color: partyColor }}>
-          {candidate.party}
+          {displayParty}
         </p>
         {candidate.bio && (
           <p className="text-sm text-slate-500 mt-1 line-clamp-2 leading-snug">
-            {candidate.bio}
+            {displayBio}
           </p>
         )}
       </Link>

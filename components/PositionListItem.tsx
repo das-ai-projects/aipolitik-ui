@@ -1,8 +1,11 @@
+'use client';
+
 import { CandidatePosition } from '@/lib/graphql/types';
 import { cn } from '@/lib/utils';
 import { getPartyColor } from '@/lib/party-colors';
 import CandidateAvatar from '@/components/CandidateAvatar';
 import Link from 'next/link';
+import { useTranslatedText } from '@/components/LanguagePreferenceContext';
 
 interface Props {
   position: CandidatePosition;
@@ -33,6 +36,8 @@ function formatDate(dateStr: string): string {
  */
 export default function PositionListItem({ position, className }: Props) {
   const { candidate, policy_position, date_generated } = position;
+  const displayParty = useTranslatedText(candidate.party ?? '');
+  const displayPosition = useTranslatedText(policy_position ?? '');
 
   const partyColor = getPartyColor(candidate.party);
 
@@ -64,7 +69,7 @@ export default function PositionListItem({ position, className }: Props) {
             className="text-sm font-semibold"
             style={{ color: partyColor }}
           >
-            {candidate.party}
+            {displayParty}
           </span>
           <span className="text-sm text-slate-400">·</span>
           <span className="text-sm text-slate-400">
@@ -74,7 +79,7 @@ export default function PositionListItem({ position, className }: Props) {
 
         <Link href={`/posts/${position.id}`}>
           <p className="text-base leading-relaxed text-slate-700 whitespace-pre-line transition-colors hover:text-slate-900">
-            {policy_position}
+            {displayPosition}
           </p>
         </Link>
       </div>

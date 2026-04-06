@@ -3,6 +3,7 @@
 import { ApolloProvider } from '@apollo/client/react';
 import { useMemo } from 'react';
 import makeApolloClient from '@/lib/apollo-client';
+import { LanguagePreferenceProvider } from '@/components/LanguagePreferenceContext';
 
 export default function ApolloClientProvider({
   children,
@@ -14,5 +15,9 @@ export default function ApolloClientProvider({
   // the client side (where Amplify auth is available).
   const client = useMemo(() => makeApolloClient(), []);
 
-  return <ApolloProvider client={client}>{children}</ApolloProvider>;
+  return (
+    <ApolloProvider client={client}>
+      <LanguagePreferenceProvider>{children}</LanguagePreferenceProvider>
+    </ApolloProvider>
+  );
 }

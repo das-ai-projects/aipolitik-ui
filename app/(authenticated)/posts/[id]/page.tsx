@@ -5,11 +5,11 @@ import { useQuery } from '@apollo/client/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { use, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 
 import FollowButton from '@/components/FollowButton';
 import RightSideBar from '@/components/RightSideBar';
 import { getPartyColor } from '@/lib/party-colors';
+import { useTranslatedText } from '@/components/LanguagePreferenceContext';
 
 // ── GraphQL ───────────────────────────────────────────────────────────────────
 
@@ -65,12 +65,19 @@ export default function PostPage({
   const followState =
     isFollowing !== null ? isFollowing : candidate?.follow?.isFollowing ?? false;
 
+  const loadingLabel = useTranslatedText('Loading…');
+  const postNotFound = useTranslatedText('Post not found.');
+  const errorPrefix = useTranslatedText('Error:');
+  const postTitle = useTranslatedText('Post');
+  const displayParty = useTranslatedText(candidate?.party ?? '');
+  const displayPosition = useTranslatedText(position?.policy_position ?? '');
+
   // ── Loading / error ────────────────────────────────────────────────────────
 
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center text-slate-400 text-base">
-        Loading…
+        {loadingLabel}
       </div>
     );
   }
@@ -78,7 +85,7 @@ export default function PostPage({
   if (error || !position) {
     return (
       <div className="flex h-full items-center justify-center text-slate-400 text-base">
-        {error ? `Error: ${error.message}` : 'Post not found.'}
+        {error ? `${errorPrefix} ${error.message}` : postNotFound}
       </div>
     );
   }
@@ -93,7 +100,7 @@ export default function PostPage({
 
         {/* Header bar: back arrow + "Post" title" */}
         <div className="sticky top-0 z-10 flex items-center gap-4 px-6 py-4 bg-white/90 backdrop-blur border-b border-slate-100">
-          <span className="text-xl font-bold text-slate-900">Post</span>
+          <span className="text-xl font-bold text-slate-900">{postTitle}</span>
         </div>
 
         {/* Post card */}
@@ -132,7 +139,7 @@ export default function PostPage({
                   className="text-base font-semibold truncate"
                   style={{ color: partyColor }}
                 >
-                  {candidate.party}
+                  {displayParty}
                 </p>
               </div>
             </Link>
@@ -149,7 +156,7 @@ export default function PostPage({
 
           {/* Policy position text */}
           <p className="mt-5 text-lg text-slate-800 leading-relaxed whitespace-pre-line">
-            {position.policy_position}
+            {displayPosition}
           </p>
 
           {/* Date */}

@@ -11,6 +11,47 @@ import { useChatsContext } from '@/components/ChatsContext';
 import ScrollableList from '@/components/ScrollableList';
 import { Chat } from '@/lib/graphql/types';
 
+function LocalChatList({
+  chats,
+  emptyMain,
+  emptySub,
+  pathname,
+  highlightedId,
+}: {
+  chats: Chat[];
+  emptyMain: string;
+  emptySub: string;
+  pathname: string;
+  highlightedId: string | null;
+}) {
+  if (chats.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-1 py-12 text-center px-4">
+        <p className="text-sm font-medium text-slate-500">{emptyMain}</p>
+        <p className="text-xs text-slate-400">{emptySub}</p>
+      </div>
+    );
+  }
+  return (
+    <div className="divide-y divide-slate-100">
+      {chats.map((chat) => {
+        const isHighlighted = chat.id === highlightedId;
+        return (
+          <div
+            key={chat.id}
+            className={`
+                transition-colors duration-700
+                ${isHighlighted ? 'animate-slide-in bg-emerald-50' : ''}
+              `}
+          >
+            <ChatListItem chat={chat} active={pathname === `/chats/${chat.id}`} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── GraphQL ───────────────────────────────────────────────────────────────────
 
 const GET_CHATS_QUERY = `
@@ -197,36 +238,6 @@ export default function ChatSidebar({ lastSentChatId, onConsumed }: Props) {
 
   // ── Render helpers ────────────────────────────────────────────────────────────
 
-  // Render a plain local list (used for search results and animation frames).
-  function LocalList({ chats }: { chats: Chat[] }) {
-    if (chats.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center gap-1 py-12 text-center px-4">
-          <p className="text-sm font-medium text-slate-500">No chats found.</p>
-          <p className="text-xs text-slate-400">Try a different name.</p>
-        </div>
-      );
-    }
-    return (
-      <div className="divide-y divide-slate-100">
-        {chats.map((chat) => {
-          const isHighlighted = chat.id === highlightedId;
-          return (
-            <div
-              key={chat.id}
-              className={`
-                transition-colors duration-700
-                ${isHighlighted ? 'animate-slide-in bg-emerald-50' : ''}
-              `}
-            >
-              <ChatListItem chat={chat} active={pathname === `/chats/${chat.id}`} />
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
@@ -272,14 +283,29 @@ export default function ChatSidebar({ lastSentChatId, onConsumed }: Props) {
       {/* List area */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         {isAnimating ? (
-          // Post-send: show locally-reordered list with slide-in animation.
-          <LocalList chats={animatingChats} />
+          <LocalChatList
+            chats={animatingChats}
+            emptyMain="No chats found."
+            emptySub="Try a different name."
+            pathname={pathname}
+            highlightedId={highlightedId}
+          />
         ) : refreshedChats ? (
-          // Freshly fetched list after send, with sent chat pinned to top.
-          <LocalList chats={refreshedChats} />
+          <LocalChatList
+            chats={refreshedChats}
+            emptyMain="No chats found."
+            emptySub="Try a different name."
+            pathname={pathname}
+            highlightedId={highlightedId}
+          />
         ) : isSearching ? (
-          // Active search: show results from searchChats.
-          <LocalList chats={searchResults} />
+          <LocalChatList
+            chats={searchResults}
+            emptyMain="No chats found."
+            emptySub="Try a different name."
+            pathname={pathname}
+            highlightedId={highlightedId}
+          />
         ) : (
           // Default: ScrollableList handles pagination and fetching.
           <ScrollableList<Chat>
@@ -292,6 +318,7 @@ export default function ChatSidebar({ lastSentChatId, onConsumed }: Props) {
             onItemsChange={handleItemsChange}
             emptyMessage="No chats yet."
             emptySubMessage="Start a conversation with a leader."
+            translateUi={false}
           />
         )}
       </div>

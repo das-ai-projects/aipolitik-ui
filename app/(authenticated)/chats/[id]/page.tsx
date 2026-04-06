@@ -399,7 +399,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           {messages.length === 0 && !pendingUserMessage && (
             <div className="flex items-center justify-center text-center px-6 py-8">
               <p className="text-slate-400 text-sm leading-relaxed">
-                Ask {candidate.name} anything about their policies and positions.{' '}
+                {candidate?.name
+                  ? `Ask ${candidate.name} anything about their policies and positions.`
+                  : 'Ask anything about their policies and positions.'}{' '}
                 <span className="text-slate-500 font-medium">Type your first question below!</span>
               </p>
             </div>
@@ -432,7 +434,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             disabled={waitingForResponse}
-            placeholder={`Message ${candidate.name}…`}
+            placeholder={candidate?.name ? `Message ${candidate.name}…` : 'Message…'}
             className="flex-1 px-4 py-2.5 text-sm rounded-full border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition disabled:opacity-50"
           />
           <button

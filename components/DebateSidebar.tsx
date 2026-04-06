@@ -68,6 +68,36 @@ function debateWithTimestampPatch(d: Debate, patch: Record<string, string>): Deb
   return ts != null ? { ...d, last_updated: ts } : d;
 }
 
+function LocalDebateList({
+  debates,
+  pathname,
+  debateTimestampPatch,
+}: {
+  debates: Debate[];
+  pathname: string;
+  debateTimestampPatch: Record<string, string>;
+}) {
+  if (debates.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-1 py-12 text-center px-4">
+        <p className="text-sm font-medium text-slate-500">No debates found.</p>
+        <p className="text-xs text-slate-400">Try a different name.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="divide-y divide-slate-100">
+      {debates.map((debate) => (
+        <DebateListItem
+          key={debate.id}
+          debate={debateWithTimestampPatch(debate, debateTimestampPatch)}
+          active={pathname === `/debates/${debate.id}`}
+        />
+      ))}
+    </div>
+  );
+}
+
 interface Props {
   lastCreatedDebate: Debate | null;
   onConsumed: () => void;
@@ -145,28 +175,6 @@ export default function DebateSidebar({ lastCreatedDebate, onConsumed }: Props) 
     router.push('/debates');
   }
 
-  function LocalList({ debates }: { debates: Debate[] }) {
-    if (debates.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center gap-1 py-12 text-center px-4">
-          <p className="text-sm font-medium text-slate-500">No debates found.</p>
-          <p className="text-xs text-slate-400">Try a different name.</p>
-        </div>
-      );
-    }
-    return (
-      <div className="divide-y divide-slate-100">
-        {debates.map((debate) => (
-          <DebateListItem
-            key={debate.id}
-            debate={debateWithTimestampPatch(debate, debateTimestampPatch)}
-            active={pathname === `/debates/${debate.id}`}
-          />
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div className="w-80 shrink-0 flex flex-col h-full border-r border-slate-200 bg-white">
       <div className="shrink-0 px-4 pt-4 pb-3 border-b border-slate-200 space-y-3">
@@ -207,9 +215,17 @@ export default function DebateSidebar({ lastCreatedDebate, onConsumed }: Props) 
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         {optimisticDebates ? (
-          <LocalList debates={optimisticDebates} />
+          <LocalDebateList
+            debates={optimisticDebates}
+            pathname={pathname}
+            debateTimestampPatch={debateTimestampPatch}
+          />
         ) : isSearching ? (
-          <LocalList debates={searchResults} />
+          <LocalDebateList
+            debates={searchResults}
+            pathname={pathname}
+            debateTimestampPatch={debateTimestampPatch}
+          />
         ) : (
           <ScrollableList<Debate>
             key={scrollableEpoch}
@@ -221,6 +237,7 @@ export default function DebateSidebar({ lastCreatedDebate, onConsumed }: Props) 
             onItemsChange={handleItemsChange}
             emptyMessage="No debates yet."
             emptySubMessage="Create your first debate."
+            translateUi={false}
           />
         )}
       </div>

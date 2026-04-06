@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslatedText } from "@/components/LanguagePreferenceContext";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -44,17 +45,20 @@ interface Props<T> {
   /** Called whenever the displayed items change (e.g. after each page load).
    *  Lets a parent component shadow the current list without owning the state. */
   onItemsChange?: (items: T[]) => void;
+
+  /** When false, empty and loading strings are shown as-is (no preferred-language translation). */
+  translateUi?: boolean;
 }
 
 // ── Spinner ───────────────────────────────────────────────────────────────────
 
-function Spinner() {
+function Spinner({ loadingLabel }: { loadingLabel: string }) {
   return (
     <div
       className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-slate-500"
       role="status"
     >
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{loadingLabel}</span>
     </div>
   );
 }
@@ -87,7 +91,14 @@ export default function ScrollableList<T>({
   emptyMessage = "No results found",
   emptySubMessage = "Try a different search",
   onItemsChange,
+  translateUi = true,
 }: Props<T>) {
+  const tLoading = useTranslatedText("Loading…");
+  const tEmpty = useTranslatedText(emptyMessage);
+  const tSubEmpty = useTranslatedText(emptySubMessage);
+  const loadingLabel = translateUi ? tLoading : "Loading…";
+  const displayEmpty = translateUi ? tEmpty : emptyMessage;
+  const displaySubEmpty = translateUi ? tSubEmpty : emptySubMessage;
 
   // ── State ──────────────────────────────────────────────────────────────────
 
@@ -230,7 +241,7 @@ export default function ScrollableList<T>({
       {/* Initial loading spinner */}
       {loading && items.length === 0 && !isEmpty && (
         <div className="flex h-32 items-center justify-center">
-          <Spinner />
+          <Spinner loadingLabel={loadingLabel} />
         </div>
       )}
 
@@ -238,14 +249,14 @@ export default function ScrollableList<T>({
       {!loading && isEmpty && (
         <div className="flex flex-col items-center justify-center gap-3 py-20 animate-pulse">
           <span className="text-5xl">😱</span>
-          <p className="text-base font-semibold text-slate-500">{emptyMessage}</p>
-          <p className="text-sm text-slate-400">{emptySubMessage}</p>
+          <p className="text-base font-semibold text-slate-500">{displayEmpty}</p>
+          <p className="text-sm text-slate-400">{displaySubEmpty}</p>
         </div>
       )}
 
       {/* Spinner at top while previous page loads */}
       {loading && items.length > 0 && pendingScrollRef.current === 'bottom' && (
-        <div className="flex justify-center py-3"><Spinner /></div>
+        <div className="flex justify-center py-3"><Spinner loadingLabel={loadingLabel} /></div>
       )}
 
       {/* Items */}
@@ -257,7 +268,7 @@ export default function ScrollableList<T>({
 
       {/* Spinner at bottom while next page loads */}
       {loading && items.length > 0 && pendingScrollRef.current === 'top' && (
-        <div className="flex justify-center py-3"><Spinner /></div>
+        <div className="flex justify-center py-3"><Spinner loadingLabel={loadingLabel} /></div>
       )}
     </div>
   );

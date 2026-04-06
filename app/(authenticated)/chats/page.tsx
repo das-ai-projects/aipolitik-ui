@@ -254,7 +254,11 @@ export default function ChatsPage() {
       <div className="flex-1 overflow-y-auto">
         {hasSearched && fullResults.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-slate-400">
-            <p className="text-sm">No leaders found for &ldquo;{inputValue}&rdquo;.</p>
+            <p className="text-sm">
+              {inputValue.trim()
+                ? `No leaders found for "${inputValue.trim()}".`
+                : ''}
+            </p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">

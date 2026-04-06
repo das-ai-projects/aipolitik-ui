@@ -153,7 +153,9 @@ export default function DebatesPage() {
         </div>
 
         <div className="max-w-xl mx-auto">
-          <label htmlFor="debate-name" className="sr-only">Debate Name</label>
+          <label htmlFor="debate-name" className="sr-only">
+            Debate Name
+          </label>
           <input
             id="debate-name"
             type="text"
@@ -185,7 +187,9 @@ export default function DebatesPage() {
           >
             <option value="">All parties</option>
             {parties.map((party) => (
-              <option key={party} value={party}>{party}</option>
+              <option key={party} value={party}>
+                {party}
+              </option>
             ))}
           </select>
         </div>
