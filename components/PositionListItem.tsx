@@ -1,10 +1,13 @@
 import { CandidatePosition } from '@/lib/graphql/types';
+import { cn } from '@/lib/utils';
 import { getPartyColor } from '@/lib/party-colors';
 import CandidateAvatar from '@/components/CandidateAvatar';
 import Link from 'next/link';
 
 interface Props {
   position: CandidatePosition;
+  /** Merged onto the root article (e.g. adjust padding in embedded contexts). */
+  className?: string;
 }
 
 /**
@@ -28,14 +31,18 @@ function formatDate(dateStr: string): string {
  *   • The candidate's name, party, and the date the position was generated
  *   • The full policy position text below
  */
-export default function PositionListItem({ position }: Props) {
+export default function PositionListItem({ position, className }: Props) {
   const { candidate, policy_position, date_generated } = position;
 
   const partyColor = getPartyColor(candidate.party);
 
   return (
-    <article className="flex gap-4 px-6 py-5 hover:bg-slate-50 transition-colors">
-
+    <article
+      className={cn(
+        'flex gap-4 px-6 py-5 transition-colors hover:bg-slate-50',
+        className
+      )}
+    >
       <div className="shrink-0">
         <Link href={`/leaders/${candidate.id}`}>
           <CandidateAvatar
@@ -46,18 +53,10 @@ export default function PositionListItem({ position }: Props) {
         </Link>
       </div>
 
-      {/* Text column (right side) — stretches to fill the remaining width */}
-      <div className="flex-1 min-w-0">
-
-        {/*
-         * Top row: candidate name, party, and date.
-         * All three items sit on the same line and wrap onto a second line
-         * if the screen is too narrow. The party name is shown in the
-         * party's colour so it stands out at a glance.
-         */}
-        <div className="flex flex-wrap items-baseline gap-x-2 mb-2">
+      <div className="min-w-0 flex-1">
+        <div className="mb-2 flex flex-wrap items-baseline gap-x-2">
           <Link href={`/leaders/${candidate.id}`}>
-            <span className="text-base font-bold text-slate-900 truncate">
+            <span className="truncate text-base font-bold text-slate-900">
               {candidate.name}
             </span>
           </Link>
@@ -73,15 +72,12 @@ export default function PositionListItem({ position }: Props) {
           </span>
         </div>
 
-        {/* The policy position text — clicking it opens the full post page. */}
         <Link href={`/posts/${position.id}`}>
-          <p className="text-base text-slate-700 leading-relaxed whitespace-pre-line hover:text-slate-900 transition-colors">
+          <p className="text-base leading-relaxed text-slate-700 whitespace-pre-line transition-colors hover:text-slate-900">
             {policy_position}
           </p>
         </Link>
-
       </div>
-
     </article>
   );
 }

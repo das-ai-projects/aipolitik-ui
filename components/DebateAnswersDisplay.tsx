@@ -74,9 +74,6 @@ export default function DebateAnswersDisplay({ latestAnswer }: Props) {
                     />
                   </div>
                 </div>
-                <p className="max-w-[11rem] truncate text-center text-xs font-semibold text-slate-900 sm:text-sm">
-                  {entry.candidate.name}
-                </p>
               </div>
 
               {/* Party stripe — full row height */}
@@ -98,7 +95,7 @@ export default function DebateAnswersDisplay({ latestAnswer }: Props) {
                 type="button"
                 aria-label={`View full answer and sources for ${entry.candidate.name}`}
                 onClick={() => setSourcesEntry(entry)}
-                className="group/plus flex w-[14%] min-w-[2.75rem] shrink-0 flex-col items-center justify-center self-stretch border-l border-slate-100 bg-slate-50/60 transition-colors duration-150 hover:border-[var(--party)] hover:bg-[var(--party)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset"
+                className="group/plus flex w-[14%] min-w-[2.75rem] shrink-0 cursor-pointer flex-col items-center justify-center self-stretch border-l border-slate-100 bg-slate-50/60 transition-colors duration-150 hover:border-[var(--party)] hover:bg-[var(--party)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset"
                 style={{ ['--party' as string]: partyColor } as CSSProperties}
               >
                 <Plus

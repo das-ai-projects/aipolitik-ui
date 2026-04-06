@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { use, useCallback, useEffect, useState } from 'react';
 import CandidateAvatar from '@/components/CandidateAvatar';
 import DebateAnswersDisplay from '@/components/DebateAnswersDisplay';
+import { useDebatesContext } from '@/components/DebatesContext';
 import type { DebateAnswer } from '@/lib/graphql/types';
 
 const GET_DEBATE = gql`
@@ -86,8 +87,16 @@ const EXECUTE_DEBATE = gql`
   ${DEBATE_ANSWER_FIELDS}
 `;
 
+/** Last whitespace-delimited segment (simple surname heuristic for display). */
+function candidateSurname(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return fullName;
+  return parts[parts.length - 1];
+}
+
 export default function DebatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: debateId } = use(params);
+  const { notifyDebateUpdated } = useDebatesContext();
   const { data, loading, error } = useQuery(GET_DEBATE, {
     variables: { id: debateId },
     // Fresh debate + latest answer on every visit; do not read or persist this payload in the cache.
@@ -110,12 +119,17 @@ export default function DebatePage({ params }: { params: Promise<{ id: string }>
   });
 
   // Initialize from server when this debate id loads (not on every Apollo refetch).
+  // `message_count` can lag or be wrong for legacy rows; never set count below latestAnswer.offset + 1.
   useEffect(() => {
     const d = (data as {
       debate?: { id: string; message_count?: number; latestAnswer?: DebateAnswer | null };
     })?.debate;
     if (!d || d.id !== debateId) return;
-    setMessageCount(d.message_count ?? 0);
+    const stored = Number(d.message_count) || 0;
+    const latestOff = d.latestAnswer?.offset;
+    const implied =
+      typeof latestOff === 'number' && Number.isFinite(latestOff) ? latestOff + 1 : 0;
+    setMessageCount(Math.max(stored, implied));
     setCurrentAnswer((d.latestAnswer ?? null) as DebateAnswer | null);
   }, [debateId, (data as { debate?: { id: string } })?.debate?.id]);
 
@@ -141,6 +155,10 @@ export default function DebatePage({ params }: { params: Promise<{ id: string }>
         const next = (ansData as any)?.debateAnswer as DebateAnswer | null | undefined;
         if (next) {
           setCurrentAnswer(next);
+          const o = next.offset;
+          if (typeof o === 'number' && Number.isFinite(o)) {
+            setMessageCount((prev) => Math.max(prev, o + 1));
+          }
         }
       } finally {
         setNavLoading(false);
@@ -164,9 +182,13 @@ export default function DebatePage({ params }: { params: Promise<{ id: string }>
         setSubmitError('No response returned from the server.');
         return;
       }
-      setMessageCount((c) => c + 1);
+      const o = newAnswer.offset;
+      const implied =
+        typeof o === 'number' && Number.isFinite(o) ? o + 1 : 0;
+      setMessageCount((c) => Math.max(c + 1, implied));
       setCurrentAnswer(newAnswer);
       setBottomInput('');
+      notifyDebateUpdated({ id: debateId, last_updated: newAnswer.dateGenerated });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to run debate.';
       setSubmitError(msg);
@@ -196,38 +218,42 @@ export default function DebatePage({ params }: { params: Promise<{ id: string }>
         <h1 className="text-center text-2xl font-bold text-slate-900 md:text-3xl">
           {debate.name}
         </h1>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-8">
-          {debate.candidates.map((candidate: { id: string; name: string; party: string; medium_image_path: string }) => (
-            <div
-              key={candidate.id}
-              className="group relative inline-flex flex-col items-center"
-            >
-              <div
-                className="pointer-events-none absolute bottom-[calc(100%+10px)] left-1/2 z-10 flex -translate-x-1/2 flex-col items-center opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
-                role="presentation"
-              >
-                <div className="max-w-[14rem] truncate rounded-md bg-slate-900 px-2.5 py-1.5 text-center text-xs font-semibold text-white shadow-md">
-                  {candidate.name}
-                </div>
-                <div
-                  className="h-0 w-0 border-x-[7px] border-t-[8px] border-transparent border-t-slate-900"
-                  aria-hidden
-                />
-              </div>
+        <div className="mt-6 flex flex-wrap items-start justify-center gap-8">
+          {debate.candidates.map((candidate: { id: string; name: string; party: string; medium_image_path: string }) => {
+            const surname = candidateSurname(candidate.name);
+            return (
               <Link
+                key={candidate.id}
                 href={`/candidates/${candidate.id}`}
                 aria-label={`View ${candidate.name} profile`}
-                className="rounded-full outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                className="group relative inline-flex max-w-[11rem] flex-col items-center gap-2 rounded-lg outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
               >
-                <CandidateAvatar
-                  imagePath={candidate.medium_image_path}
-                  name={candidate.name}
-                  party={candidate.party}
-                  sizeClass="w-20 h-20"
-                />
+                <span className="relative inline-block rounded-full">
+                  <span
+                    className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 flex -translate-x-1/2 flex-col items-center opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+                    role="tooltip"
+                  >
+                    <span className="max-w-[14rem] rounded-md bg-slate-900 px-2.5 py-1.5 text-center text-xs font-semibold text-white shadow-md">
+                      {candidate.name}
+                    </span>
+                    <span
+                      className="h-0 w-0 border-x-[7px] border-t-[8px] border-transparent border-t-slate-900"
+                      aria-hidden
+                    />
+                  </span>
+                  <CandidateAvatar
+                    imagePath={candidate.medium_image_path}
+                    name={candidate.name}
+                    party={candidate.party}
+                    sizeClass="w-20 h-20"
+                  />
+                </span>
+                <span className="block w-full truncate text-center text-xs font-semibold text-slate-900 sm:text-sm">
+                  {surname}
+                </span>
               </Link>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

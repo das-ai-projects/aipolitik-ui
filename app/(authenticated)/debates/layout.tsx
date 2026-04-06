@@ -7,10 +7,15 @@ import { Debate } from '@/lib/graphql/types';
 
 export default function DebatesLayout({ children }: { children: React.ReactNode }) {
   const [lastCreatedDebate, setLastCreatedDebate] = useState<Debate | null>(null);
+  const [debateTimestampPatch, setDebateTimestampPatch] = useState<Record<string, string>>({});
   const [isNewDebateMode, setIsNewDebateMode] = useState(false);
 
   const notifyDebateCreated = useCallback((debate: Debate) => {
     setLastCreatedDebate(debate);
+  }, []);
+
+  const notifyDebateUpdated = useCallback((payload: { id: string; last_updated: string }) => {
+    setDebateTimestampPatch((prev) => ({ ...prev, [payload.id]: payload.last_updated }));
   }, []);
 
   const openNewDebate = useCallback(() => setIsNewDebateMode(true), []);
@@ -18,7 +23,14 @@ export default function DebatesLayout({ children }: { children: React.ReactNode 
 
   return (
     <DebatesContext.Provider
-      value={{ notifyDebateCreated, isNewDebateMode, openNewDebate, closeNewDebate }}
+      value={{
+        notifyDebateCreated,
+        notifyDebateUpdated,
+        debateTimestampPatch,
+        isNewDebateMode,
+        openNewDebate,
+        closeNewDebate,
+      }}
     >
       <div className="flex h-full overflow-hidden">
         <DebateSidebar

@@ -31,12 +31,12 @@ export default function CandidateAvatar({
       className={`shrink-0 rounded-full p-[4px] ${sizeClass}`}
       style={{ backgroundColor: partyColor }}
     >
-      <div className="w-full h-full rounded-full overflow-hidden bg-slate-200">
+      <div className="w-full h-full overflow-hidden rounded-full bg-slate-200">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={imagePath}
           alt={name}
-          className="w-full h-full object-cover"
+          className="h-full w-full object-cover"
         />
       </div>
     </div>

@@ -63,6 +63,11 @@ const SEARCH_DEBATES_GQL = gql`
 const DEFAULT_VARIABLES: Record<string, unknown> = {};
 const getId = (d: Debate) => d.id;
 
+function debateWithTimestampPatch(d: Debate, patch: Record<string, string>): Debate {
+  const ts = patch[d.id];
+  return ts != null ? { ...d, last_updated: ts } : d;
+}
+
 interface Props {
   lastCreatedDebate: Debate | null;
   onConsumed: () => void;
@@ -71,7 +76,7 @@ interface Props {
 export default function DebateSidebar({ lastCreatedDebate, onConsumed }: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const { openNewDebate } = useDebatesContext();
+  const { openNewDebate, debateTimestampPatch } = useDebatesContext();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedTerm, setDebouncedTerm] = useState('');
@@ -85,9 +90,12 @@ export default function DebateSidebar({ lastCreatedDebate, onConsumed }: Props) 
 
   const renderDebateItem = useCallback(
     (debate: Debate) => (
-      <DebateListItem debate={debate} active={pathname === `/debates/${debate.id}`} />
+      <DebateListItem
+        debate={debateWithTimestampPatch(debate, debateTimestampPatch)}
+        active={pathname === `/debates/${debate.id}`}
+      />
     ),
-    [pathname]
+    [pathname, debateTimestampPatch]
   );
 
   const handleItemsChange = useCallback((items: Debate[]) => {
@@ -151,7 +159,7 @@ export default function DebateSidebar({ lastCreatedDebate, onConsumed }: Props) 
         {debates.map((debate) => (
           <DebateListItem
             key={debate.id}
-            debate={debate}
+            debate={debateWithTimestampPatch(debate, debateTimestampPatch)}
             active={pathname === `/debates/${debate.id}`}
           />
         ))}
