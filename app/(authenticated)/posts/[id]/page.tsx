@@ -4,12 +4,14 @@ import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { use, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 
 import FollowButton from '@/components/FollowButton';
+import PositionReactionBar from '@/components/PositionReactionBar';
 import RightSideBar from '@/components/RightSideBar';
 import { getPartyColor } from '@/lib/party-colors';
 import { useTranslatedText } from '@/components/LanguagePreferenceContext';
+import type { PositionReactionKind, PositionReactionStats } from '@/lib/graphql/types';
 
 // ── GraphQL ───────────────────────────────────────────────────────────────────
 
@@ -28,6 +30,11 @@ const GET_POSITION = gql`
           isFollowing
         }
       }
+      reaction_stats {
+        like_count
+        dislike_count
+      }
+      my_reaction
     }
   }
 `;
@@ -58,8 +65,18 @@ export default function PostPage({
   // Local follow state — mirrors the server value but updates immediately
   // when the user clicks Follow/Unfollow, without waiting for a refetch.
   const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
+  const [reactionStats, setReactionStats] = useState<PositionReactionStats | null>(null);
+  const [myReaction, setMyReaction] = useState<PositionReactionKind | null>(null);
 
   const position = (data as any)?.getCandidatePositionById;
+
+  useEffect(() => {
+    if (!position) return;
+    setReactionStats(
+      position.reaction_stats ?? { like_count: 0, dislike_count: 0 }
+    );
+    setMyReaction(position.my_reaction ?? null);
+  }, [position?.id, position?.reaction_stats, position?.my_reaction]);
   const candidate = position?.candidate;
   const partyColor = candidate ? getPartyColor(candidate.party) : '#6b7280';
   const followState =
@@ -163,6 +180,18 @@ export default function PostPage({
           <p className="mt-4 text-base text-slate-400">
             {formatDate(position.date_generated)}
           </p>
+
+          {reactionStats !== null && (
+            <PositionReactionBar
+              candidatePositionId={position.id}
+              reactionStats={reactionStats}
+              myReaction={myReaction}
+              onReactionChange={({ reaction_stats, my_reaction }) => {
+                setReactionStats(reaction_stats);
+                setMyReaction(my_reaction);
+              }}
+            />
+          )}
 
           {/* Divider */}
           <div className="mt-4 border-t border-slate-100" />

@@ -2,7 +2,10 @@
 
 import { gql } from '@apollo/client';
 import { useLazyQuery, useMutation, useQuery } from '@apollo/client/react';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import DebateExecuteLoadingOverlay, {
+  type DebateLoaderCandidate,
+} from '@/components/DebateExecuteLoadingOverlay';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { use, useCallback, useEffect, useState } from 'react';
 import CandidateAvatar from '@/components/CandidateAvatar';
@@ -20,6 +23,7 @@ const GET_DEBATE = gql`
         id
         name
         party
+        small_image_path
         medium_image_path
       }
       latestAnswer {
@@ -314,24 +318,10 @@ export default function DebatePage({ params }: { params: Promise<{ id: string }>
         </form>
       </div>
 
-      {executeLoading && (
-        <div className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-900/45 backdrop-blur-[2px]">
-          <div
-            className="flex flex-col items-center gap-4 rounded-2xl border border-slate-200 bg-white px-10 py-8 shadow-2xl"
-            role="status"
-            aria-live="polite"
-          >
-            <Loader2
-              className="h-12 w-12 animate-spin text-emerald-600"
-              aria-hidden
-            />
-            <p className="text-sm font-semibold text-slate-800">
-              Getting candidate responses…
-            </p>
-            <span className="sr-only">Loading, please wait.</span>
-          </div>
-        </div>
-      )}
+      <DebateExecuteLoadingOverlay
+        open={executeLoading}
+        candidates={debate.candidates as DebateLoaderCandidate[]}
+      />
     </div>
   );
 }

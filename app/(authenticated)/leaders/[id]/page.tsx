@@ -11,6 +11,7 @@ import FollowButton from '@/components/FollowButton';
 import RightSideBar from '@/components/RightSideBar';
 import ScrollablePositionList from '@/components/ScrollablePositionList';
 import { getPartyColor } from '@/lib/party-colors';
+import { POSITION_REACTION_FIELDS } from '@/lib/graphql/positionReactionFields';
 import { useTranslatedText } from '@/components/LanguagePreferenceContext';
 
 function LeaderCategoryTab({
@@ -95,6 +96,7 @@ const POSITIONS_QUERY = `
             party
             small_image_path
           }
+          ${POSITION_REACTION_FIELDS}
         }
       }
     }

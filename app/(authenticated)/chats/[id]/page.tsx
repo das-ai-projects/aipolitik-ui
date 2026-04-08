@@ -70,6 +70,11 @@ const GET_POSITIONS_BY_IDS = gql`
         party
         small_image_path
       }
+      reaction_stats {
+        like_count
+        dislike_count
+      }
+      my_reaction
     }
   }
 `;

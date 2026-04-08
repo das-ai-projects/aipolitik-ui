@@ -1,5 +1,6 @@
 import HomeTabs from '@/components/HomeTabs';
 import RightSideBar from '@/components/RightSideBar';
+import { POSITION_REACTION_FIELDS } from '@/lib/graphql/positionReactionFields';
 
 const FOR_YOU_QUERY = `
   query SearchCandidatePositions($searchAfter: String, $searchBefore: String, $limit: Int) {
@@ -20,6 +21,7 @@ const FOR_YOU_QUERY = `
             party
             small_image_path
           }
+          ${POSITION_REACTION_FIELDS}
         }
       }
     }
@@ -45,6 +47,7 @@ const FOLLOWING_QUERY = `
             party
             small_image_path
           }
+          ${POSITION_REACTION_FIELDS}
         }
       }
     }

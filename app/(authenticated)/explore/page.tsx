@@ -12,6 +12,7 @@ import {
   useTranslatedText,
 } from '@/components/LanguagePreferenceContext';
 import { TRANSLATE_SEARCH_QUERIES } from '@/lib/graphql/languagePreference';
+import { POSITION_REACTION_FIELDS } from '@/lib/graphql/positionReactionFields';
 import { cn } from '@/lib/utils';
 
 // ── Queries ───────────────────────────────────────────────────────────────────
@@ -27,6 +28,7 @@ const POSITIONS_QUERY = `
           policy_position
           date_generated
           candidate { id name party small_image_path }
+          ${POSITION_REACTION_FIELDS}
         }
       }
     }

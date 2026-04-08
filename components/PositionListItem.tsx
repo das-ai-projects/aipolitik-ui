@@ -1,11 +1,13 @@
 'use client';
 
-import { CandidatePosition } from '@/lib/graphql/types';
-import { cn } from '@/lib/utils';
-import { getPartyColor } from '@/lib/party-colors';
 import CandidateAvatar from '@/components/CandidateAvatar';
-import Link from 'next/link';
+import PositionReactionBar from '@/components/PositionReactionBar';
 import { useTranslatedText } from '@/components/LanguagePreferenceContext';
+import type { CandidatePosition, PositionReactionKind } from '@/lib/graphql/types';
+import { getPartyColor } from '@/lib/party-colors';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface Props {
   position: CandidatePosition;
@@ -38,6 +40,27 @@ export default function PositionListItem({ position, className }: Props) {
   const { candidate, policy_position, date_generated } = position;
   const displayParty = useTranslatedText(candidate.party ?? '');
   const displayPosition = useTranslatedText(policy_position ?? '');
+
+  const [reactionStats, setReactionStats] = useState(() => ({
+    like_count: position.reaction_stats?.like_count ?? 0,
+    dislike_count: position.reaction_stats?.dislike_count ?? 0,
+  }));
+  const [myReaction, setMyReaction] = useState<PositionReactionKind | null>(
+    () => position.my_reaction ?? null
+  );
+
+  useEffect(() => {
+    setReactionStats({
+      like_count: position.reaction_stats?.like_count ?? 0,
+      dislike_count: position.reaction_stats?.dislike_count ?? 0,
+    });
+    setMyReaction(position.my_reaction ?? null);
+  }, [
+    position.id,
+    position.reaction_stats?.like_count,
+    position.reaction_stats?.dislike_count,
+    position.my_reaction,
+  ]);
 
   const partyColor = getPartyColor(candidate.party);
 
@@ -82,6 +105,16 @@ export default function PositionListItem({ position, className }: Props) {
             {displayPosition}
           </p>
         </Link>
+
+        <PositionReactionBar
+          candidatePositionId={position.id}
+          reactionStats={reactionStats}
+          myReaction={myReaction}
+          onReactionChange={({ reaction_stats, my_reaction }) => {
+            setReactionStats(reaction_stats);
+            setMyReaction(my_reaction);
+          }}
+        />
       </div>
     </article>
   );

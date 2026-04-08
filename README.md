@@ -15,7 +15,7 @@ Create `.env.local` in this directory (never commit it). All client-side values 
 |----------|----------|-------------|
 | `NEXT_PUBLIC_AWS_COGNITO_POOL_ID` | Yes | Cognito User Pool ID (e.g. `us-east-1_xxxxxxxxx`). |
 | `NEXT_PUBLIC_AWS_COGNITO_APP_CLIENT_ID` | Yes | Cognito **public** app client ID (no client secret), same pool as above. |
-| `NEXT_PUBLIC_GRAPHQL_URL` | Yes | GraphQL HTTP endpoint: the **ALB base URL** from the mongo stack output `GraphQLUrl`, e.g. `http://your-alb.us-east-1.elb.amazonaws.com/`. Apollo sends `POST` requests to this URL. |
+| `NEXT_PUBLIC_GRAPHQL_URL` | Yes | GraphQL base URL from **aipolitik-mongo** stack output **`GraphQLUrl`** (e.g. `https://api.prototype.aipolitik.com/` when **`GraphQlRoute53HostedZoneId`** is set, otherwise `http://<alb-dns>/`). Apollo sends `POST` to this URL. |
 | `NEXT_PUBLIC_AWS_COGNITO_REGION` | No | AWS region (defaults can be derived from the pool ID). |
 
 **Important:** `NEXT_PUBLIC_GRAPHQL_URL` must match the deployed API (see [aipolitik-mongo/docs/GRAPHQL_API_CONTRACT.md](../aipolitik-mongo/docs/GRAPHQL_API_CONTRACT.md)). The API uses **HTTP** (not HTTPS) on the ALB until you terminate TLS in front of it.

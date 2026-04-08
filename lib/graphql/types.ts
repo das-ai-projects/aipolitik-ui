@@ -97,6 +97,13 @@ export interface ChatMessageResults {
   pageInfo: PageInfo;
 }
 
+export interface PositionReactionStats {
+  like_count: number;
+  dislike_count: number;
+}
+
+export type PositionReactionKind = 'LIKE' | 'DISLIKE';
+
 export interface CandidatePosition {
   id: string;
   candidate: Candidate;
@@ -105,6 +112,8 @@ export interface CandidatePosition {
   policy_topic: string;
   policy_position: string;
   date_generated: string;
+  reaction_stats?: PositionReactionStats;
+  my_reaction?: PositionReactionKind | null;
 }
 
 export interface CandidateEdge {
