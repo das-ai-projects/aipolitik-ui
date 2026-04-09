@@ -50,7 +50,7 @@ export default function DebateAnswersDisplay({ latestAnswer }: Props) {
             Click on the plus icon to view the full answer and sources for each candidate.
           </p>
         </div>
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
           {latestAnswer.answers.map((entry) => {
             const partyColor = getPartyColor(entry.candidate.party);
             const imageSrc =
@@ -59,9 +59,9 @@ export default function DebateAnswersDisplay({ latestAnswer }: Props) {
             return (
               <div
                 key={entry.candidateId}
-                className="flex min-h-0 flex-1 basis-0 flex-row border-b border-slate-100 last:border-b-0"
+                className="flex shrink-0 flex-row border-b border-slate-100 last:border-b-0"
               >
-                <div className="flex w-40 shrink-0 flex-col items-center justify-center gap-2 px-3 py-3 sm:w-48 md:w-52 md:px-4 md:py-4">
+                <div className="flex w-40 shrink-0 flex-col items-center justify-center gap-2 self-stretch px-3 py-3 sm:w-48 md:w-52 md:px-4 md:py-4">
                   <div
                     className="rounded-full p-1"
                     style={{ backgroundColor: partyColor }}
@@ -85,7 +85,7 @@ export default function DebateAnswersDisplay({ latestAnswer }: Props) {
                 />
 
                 <div className="flex min-h-0 min-w-0 flex-1 items-center py-4 pl-5 pr-4 sm:pl-6 sm:pr-6 md:pl-8 md:pr-8">
-                  <p className="w-full text-justify text-sm leading-relaxed text-slate-800 sm:text-base md:text-lg">
+                  <p className="w-full min-w-0 text-justify text-sm leading-relaxed text-slate-800 sm:text-base md:text-lg">
                     {entry.shortAnswer}
                   </p>
                 </div>

@@ -95,6 +95,8 @@
 }
 
 :root {
+  /* ~Chrome 75% zoom: scales the whole UI proportionally (layout, type, images). Tweak 0.8–0.9 if this feels too small. */
+  --ui-scale: 0.75;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -166,6 +168,9 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+  html {
+    zoom: var(--ui-scale);
   }
   body {
     @apply bg-background text-foreground;
