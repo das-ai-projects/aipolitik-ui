@@ -85,7 +85,7 @@ export default function DebateAnswersDisplay({ latestAnswer }: Props) {
                 />
 
                 <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden py-4 pl-5 pr-4 sm:pl-6 sm:pr-6 md:pl-8 md:pr-8">
-                  <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+                  <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-contain [justify-content:safe_center]">
                     <p className="w-full min-w-0 text-justify text-sm leading-relaxed text-slate-800 sm:text-base md:text-lg">
                       {entry.shortAnswer}
                     </p>
