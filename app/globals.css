@@ -168,7 +168,7 @@
     @apply border-border outline-ring/50;
   }
   html {
-    font-size: 87.5%;
+    font-size: 75%;
   }
   body {
     @apply bg-background text-foreground;
