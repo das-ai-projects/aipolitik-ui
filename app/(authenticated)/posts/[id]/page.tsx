@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { use, useEffect, useState } from 'react';
 
 import FollowButton from '@/components/FollowButton';
+import PostRelatedPositionItem from '@/components/PostRelatedPositionItem';
 import PositionReactionBar from '@/components/PositionReactionBar';
 import RightSideBar from '@/components/RightSideBar';
 import { getPartyColor } from '@/lib/party-colors';
@@ -29,6 +30,23 @@ const GET_POSITION = gql`
         follow {
           isFollowing
         }
+      }
+      reaction_stats {
+        like_count
+        dislike_count
+      }
+      my_reaction
+      reactionMade
+    }
+    otherPositions: getOtherPositionsByCandidate(candidatePositionId: $id) {
+      id
+      policy_position
+      date_generated
+      candidate {
+        id
+        name
+        party
+        small_image_path
       }
       reaction_stats {
         like_count
@@ -87,8 +105,11 @@ export default function PostPage({
   const postNotFound = useTranslatedText('Post not found.');
   const errorPrefix = useTranslatedText('Error:');
   const postTitle = useTranslatedText('Post');
+  const otherPositionsTitle = useTranslatedText('More from this candidate');
+  const noOtherPositions = useTranslatedText('No other positions available yet.');
   const displayParty = useTranslatedText(candidate?.party ?? '');
   const displayPosition = useTranslatedText(position?.policy_position ?? '');
+  const otherPositions = ((data as any)?.otherPositions ?? []) as any[];
 
   // ── Loading / error ────────────────────────────────────────────────────────
 
@@ -196,6 +217,33 @@ export default function PostPage({
 
           {/* Divider */}
           <div className="mt-4 border-t border-slate-100" />
+
+          {/* Other positions by same candidate */}
+          <section className="mt-6">
+            <h2 className="mb-3 text-lg font-semibold text-slate-900">
+              {otherPositionsTitle}
+            </h2>
+
+            {otherPositions.length === 0 ? (
+              <p className="text-sm text-slate-500">{noOtherPositions}</p>
+            ) : (
+              <div className="-mx-1 overflow-x-auto">
+                <div className="flex min-w-full gap-3 px-1 pb-2">
+                  {otherPositions.map((p) => (
+                    <div
+                      key={p.id}
+                      className="min-w-[50%] max-w-[50%] rounded-lg border border-slate-200 bg-white"
+                    >
+                      <PostRelatedPositionItem
+                        position={p}
+                        className="h-full"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
         </div>
       </div>
 

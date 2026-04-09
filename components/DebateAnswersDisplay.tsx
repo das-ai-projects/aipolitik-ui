@@ -42,9 +42,12 @@ export default function DebateAnswersDisplay({ latestAnswer }: Props) {
         entry={sourcesEntry}
       />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="shrink-0 border-b border-slate-200 bg-slate-100 px-4 py-4 sm:px-6 sm:py-5">
+        <div className="flex shrink-0 flex-col gap-3 border-b border-slate-200 bg-slate-100 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5">
           <p className="text-center text-lg font-bold leading-snug text-slate-900 sm:text-xl">
             {latestAnswer.question}
+          </p>
+          <p className="text-center text-sm leading-snug text-slate-500 sm:text-base">
+            Click on the plus icon to view the full answer and sources for each candidate.
           </p>
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
