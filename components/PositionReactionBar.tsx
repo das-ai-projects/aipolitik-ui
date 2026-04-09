@@ -23,6 +23,7 @@ const SET_POSITION_REACTION = gql`
         dislike_count
       }
       my_reaction
+      reactionMade
     }
   }
 `;
@@ -34,6 +35,7 @@ interface Props {
   onReactionChange: (next: {
     reaction_stats: PositionReactionStats;
     my_reaction: PositionReactionKind | null;
+    reactionMade: string | null;
   }) => void;
   className?: string;
 }
@@ -51,11 +53,13 @@ export default function PositionReactionBar({
         setCandidatePositionReaction: {
           reaction_stats: PositionReactionStats;
           my_reaction: PositionReactionKind | null;
+          reactionMade: string | null;
         };
       }).setCandidatePositionReaction;
       onReactionChange({
         reaction_stats: p.reaction_stats,
         my_reaction: p.my_reaction ?? null,
+        reactionMade: p.reactionMade ?? null,
       });
     },
   });

@@ -3,6 +3,7 @@ export interface Follow {
   candidate: Candidate;
   userId: string;
   isFollowing: boolean;
+  dateFollowed: string;
 }
 
 export interface Candidate {
@@ -114,6 +115,8 @@ export interface CandidatePosition {
   date_generated: string;
   reaction_stats?: PositionReactionStats;
   my_reaction?: PositionReactionKind | null;
+  /** ISO 8601 when the current user set/changed their reaction on this position. */
+  reactionMade?: string | null;
 }
 
 export interface CandidateEdge {

@@ -35,6 +35,7 @@ const GET_POSITION = gql`
         dislike_count
       }
       my_reaction
+      reactionMade
     }
   }
 `;

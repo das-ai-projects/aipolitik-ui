@@ -8,4 +8,5 @@ export const POSITION_REACTION_FIELDS = `
     dislike_count
   }
   my_reaction
+  reactionMade
 `;

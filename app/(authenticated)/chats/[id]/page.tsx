@@ -75,6 +75,7 @@ const GET_POSITIONS_BY_IDS = gql`
         dislike_count
       }
       my_reaction
+      reactionMade
     }
   }
 `;
