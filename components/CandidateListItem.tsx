@@ -10,9 +10,11 @@ import { useTranslatedText } from '@/components/LanguagePreferenceContext';
 
 interface Props {
   candidate: any;
+  /** Called when the user unfollows (so parent lists can refresh). */
+  onUnfollowed?: () => void;
 }
 
-export default function CandidateListItem({ candidate }: Props) {
+export default function CandidateListItem({ candidate, onUnfollowed }: Props) {
   // Local follow state so the button updates instantly on click.
   const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
   const displayParty = useTranslatedText(candidate.party ?? '');
@@ -73,7 +75,10 @@ export default function CandidateListItem({ candidate }: Props) {
         <FollowButton
           candidateId={candidate.id}
           isFollowing={followState}
-          onToggle={setIsFollowing}
+          onToggle={(next) => {
+            setIsFollowing(next);
+            if (!next) onUnfollowed?.();
+          }}
         />
       </div>
     </article>

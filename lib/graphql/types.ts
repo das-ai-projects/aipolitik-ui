@@ -146,3 +146,34 @@ export interface CandidatePositionResults {
   edges: CandidatePositionEdge[];
   pageInfo: PageInfo;
 }
+
+/** Row from `searchMyPositionReactions`; `candidatePosition` may be null if deleted. */
+export interface UserPositionReaction {
+  id: string;
+  candidatePositionId: string;
+  kind: PositionReactionKind;
+  reactionMade?: string | null;
+  candidatePosition?: CandidatePosition | null;
+}
+
+export interface UserPositionReactionEdge {
+  node: UserPositionReaction;
+  token: string;
+  score: number;
+}
+
+export interface UserPositionReactionResults {
+  edges: UserPositionReactionEdge[];
+  pageInfo: PageInfo;
+}
+
+export interface FollowEdge {
+  node: Follow;
+  token: string;
+  score: number;
+}
+
+export interface FollowResults {
+  edges: FollowEdge[];
+  pageInfo: PageInfo;
+}

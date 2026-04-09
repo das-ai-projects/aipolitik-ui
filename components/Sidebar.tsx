@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'aws-amplify/auth';
-import { Home, Compass, MessageSquare, Scale, LogOut, Settings } from 'lucide-react';
+import { Home, Compass, MessageSquare, Scale, LogOut, Settings, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslatedText } from '@/components/LanguagePreferenceContext';
 
@@ -13,6 +13,7 @@ const navDefs = [
   { labelKey: 'Explore', href: '/explore', icon: Compass },
   { labelKey: 'Chats', href: '/chats', icon: MessageSquare },
   { labelKey: 'Debates', href: '/debates', icon: Scale },
+  { labelKey: 'Profile', href: '/profile', icon: User },
   { labelKey: 'Settings', href: '/settings', icon: Settings },
 ] as const;
 
