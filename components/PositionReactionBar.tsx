@@ -2,7 +2,7 @@
 
 import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
-import { Heart, ThumbsDown } from 'lucide-react';
+import { ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useCallback } from 'react';
 
 import type { PositionReactionKind, PositionReactionStats } from '@/lib/graphql/types';
@@ -82,36 +82,48 @@ export default function PositionReactionBar({
           disabled={loading}
           onClick={() => send('LIKE')}
           className={cn(
-            'flex min-h-11 flex-1 min-w-0 items-center justify-center gap-1.5 border-r border-slate-200 py-2 text-sm font-medium transition-colors',
-            'text-slate-600 hover:bg-rose-50 hover:text-rose-600',
+            'group/like flex min-h-11 flex-1 min-w-0 items-center justify-center gap-1.5 border-r border-slate-200 py-2 text-sm font-medium transition-colors',
+            'text-slate-600 hover:bg-emerald-50',
             'disabled:opacity-50',
-            myReaction === 'LIKE' && 'bg-rose-50 text-rose-600'
+            myReaction === 'LIKE' && 'bg-emerald-50'
           )}
           aria-pressed={myReaction === 'LIKE'}
           aria-label={myReaction === 'LIKE' ? 'Unlike' : 'Like'}
         >
-          <Heart
-            className="h-5 w-5 shrink-0"
+          <ThumbsUp
+            className={cn(
+              'h-5 w-5 shrink-0 fill-transparent transition-colors',
+              myReaction === 'LIKE'
+                ? 'fill-current text-emerald-500'
+                : 'text-slate-400 group-hover/like:fill-current group-hover/like:text-emerald-500'
+            )}
             strokeWidth={1.75}
-            fill={myReaction === 'LIKE' ? 'currentColor' : 'none'}
           />
-          <span className="tabular-nums">{like_count}</span>
+          <span className="tabular-nums text-slate-600">{like_count}</span>
         </button>
         <button
           type="button"
           disabled={loading}
           onClick={() => send('DISLIKE')}
           className={cn(
-            'flex min-h-11 flex-1 min-w-0 items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors',
-            'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+            'group/dislike flex min-h-11 flex-1 min-w-0 items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors',
+            'text-slate-600 hover:bg-orange-50',
             'disabled:opacity-50',
-            myReaction === 'DISLIKE' && 'bg-slate-200 text-slate-900'
+            myReaction === 'DISLIKE' && 'bg-orange-50'
           )}
           aria-pressed={myReaction === 'DISLIKE'}
           aria-label={myReaction === 'DISLIKE' ? 'Remove dislike' : 'Dislike'}
         >
-          <ThumbsDown className="h-5 w-5 shrink-0" strokeWidth={1.75} />
-          <span className="tabular-nums">{dislike_count}</span>
+          <ThumbsDown
+            className={cn(
+              'h-5 w-5 shrink-0 fill-transparent transition-colors',
+              myReaction === 'DISLIKE'
+                ? 'fill-current text-orange-500'
+                : 'text-slate-400 group-hover/dislike:fill-current group-hover/dislike:text-orange-500'
+            )}
+            strokeWidth={1.75}
+          />
+          <span className="tabular-nums text-slate-600">{dislike_count}</span>
         </button>
       </div>
     </div>

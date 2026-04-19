@@ -8,16 +8,16 @@ import { useTranslatedText } from '@/components/LanguagePreferenceContext';
 export default function RightSideBar() {
   const contactBlurb = useTranslatedText('Like what you see? Contact Me.');
   return (
-    <aside className="w-1/3 min-w-[280px] shrink-0 border-l border-slate-200 bg-white flex flex-col">
-      <div className="pt-6 px-4 pb-4">
+    <aside className="w-1/3 min-w-[320px] shrink-0 border-l border-slate-200 bg-white flex flex-col">
+      <div className="pt-8 px-5 pb-5">
         <RandomCandidatesFollow />
       </div>
-      <div className="mt-auto p-4">
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 flex flex-col items-center gap-4">
-          <h2 className="text-slate-700 font-semibold text-sm leading-snug text-center">
+      <div className="mt-auto p-5">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 flex flex-col items-center gap-5">
+          <h2 className="text-slate-700 font-semibold text-base leading-snug text-center">
             {contactBlurb}
           </h2>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-5">
             <Link
               href={'https://www.linkedin.com/in/ayandas1/'}
               target="_blank"
@@ -25,7 +25,7 @@ export default function RightSideBar() {
               aria-label="LinkedIn"
               className="text-slate-500 hover:text-[#0A66C2] transition-colors"
             >
-              <Linkedin className="h-6 w-6" />
+              <Linkedin className="h-7 w-7" />
             </Link>
             <Link
               href={'https://www.threads.com/@ayan_das_4719'}
@@ -34,7 +34,7 @@ export default function RightSideBar() {
               aria-label="Threads"
               className="text-slate-500 hover:text-black transition-colors"
             >
-              <MessageCircle className="h-6 w-6" />
+              <MessageCircle className="h-7 w-7" />
             </Link>
           </div>
         </div>

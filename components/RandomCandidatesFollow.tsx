@@ -28,7 +28,7 @@ const SET_CANDIDATE_FOLLOW = gql`
   }
 `;
 
-const LIST_SIZE = 5;
+const LIST_SIZE = 6;
 const REPLACEMENT_SIZE = 1;
 
 function RandomFollowRow({
@@ -45,26 +45,26 @@ function RandomFollowRow({
   const displayParty = useTranslatedText(candidate.party ?? '');
   const followLabel = useTranslatedText('Follow');
   return (
-    <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
+    <div className="flex items-center gap-3.5 px-4 py-3.5 hover:bg-slate-50 transition-colors">
       <Link href={`/leaders/${candidate.id}`}>
         <CandidateAvatar
           imagePath={candidate.small_image_path}
           name={candidate.name}
           party={candidate.party}
-          sizeClass="w-10 h-10"
+          sizeClass="w-12 h-12"
         />
       </Link>
       <div className="flex-1 min-w-0">
         <Link href={`/leaders/${candidate.id}`}>
-          <p className="text-sm font-bold text-slate-900 truncate">{candidate.name}</p>
+          <p className="text-base font-bold text-slate-900 truncate">{candidate.name}</p>
         </Link>
-        <p className="text-xs text-slate-500 truncate">{displayParty}</p>
+        <p className="text-sm text-slate-500 truncate">{displayParty}</p>
       </div>
       <button
         type="button"
         onClick={() => onFollow(index)}
         disabled={followLoading}
-        className="shrink-0 rounded-full bg-emerald-500 text-slate-200 px-4 py-1.5 text-sm font-bold hover:bg-emerald-600 disabled:opacity-50 transition-colors"
+        className="shrink-0 rounded-full bg-emerald-500 text-white px-5 py-2 text-sm font-bold hover:bg-emerald-600 disabled:opacity-50 transition-colors"
       >
         {followLabel}
       </button>
@@ -130,11 +130,11 @@ export default function RandomCandidatesFollow() {
 
   if (loading && candidates.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-200">
-          <h2 className="text-base font-bold text-slate-900">{whoToFollow}</h2>
+      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-slate-200">
+          <h2 className="text-lg font-bold text-slate-900">{whoToFollow}</h2>
         </div>
-        <div className="flex justify-center py-8">
+        <div className="flex justify-center py-10">
           <div
             className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-slate-500"
             role="status"
@@ -150,12 +150,12 @@ export default function RandomCandidatesFollow() {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-200">
-        <h2 className="text-base font-bold text-slate-900">{whoToFollow}</h2>
+    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      <div className="px-5 py-4 border-b border-slate-200">
+        <h2 className="text-lg font-bold text-slate-900">{whoToFollow}</h2>
       </div>
 
-      <div className="py-2">
+      <div className="py-3">
         {candidates.map((candidate, index) => (
           <RandomFollowRow
             key={`${candidate.id}-${index}`}
