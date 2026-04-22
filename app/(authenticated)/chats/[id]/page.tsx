@@ -432,8 +432,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       </div>
 
       {/* ── Input bar ───────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-4 py-3 border-t border-slate-200 bg-white">
-        <form onSubmit={handleSubmit} className="flex items-center gap-2">
+      <div className="shrink-0 px-4 py-4 sm:px-6 sm:py-5 border-t border-slate-200 bg-white">
+        <form onSubmit={handleSubmit} className="flex items-center gap-3">
           <input
             ref={inputRef}
             type="text"
@@ -441,15 +441,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             onChange={(e) => setInputValue(e.target.value)}
             disabled={waitingForResponse}
             placeholder={candidate?.name ? `Message ${candidate.name}…` : 'Message…'}
-            className="flex-1 px-4 py-2.5 text-sm rounded-full border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition disabled:opacity-50"
+            className="min-h-[3.25rem] flex-1 px-5 py-3 text-base rounded-full border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition disabled:opacity-50"
           />
           <button
             type="submit"
             disabled={!inputValue.trim() || waitingForResponse}
-            className="shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="shrink-0 flex items-center justify-center w-11 h-11 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label="Send message"
           >
-            <SendHorizonal size={16} />
+            <SendHorizonal size={20} />
           </button>
         </form>
       </div>

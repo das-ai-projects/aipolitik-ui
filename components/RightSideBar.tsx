@@ -6,7 +6,7 @@ import RandomCandidatesFollow from '@/components/RandomCandidatesFollow';
 import { useTranslatedText } from '@/components/LanguagePreferenceContext';
 
 export default function RightSideBar() {
-  const contactBlurb = useTranslatedText('Like what you see? Contact Me.');
+  const contactBlurb = useTranslatedText('Like what you see? Contact Me!');
   return (
     <aside className="w-1/3 min-w-[320px] shrink-0 border-l border-slate-200 bg-white flex flex-col">
       <div className="pt-8 px-5 pb-5">

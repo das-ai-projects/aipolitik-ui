@@ -64,32 +64,41 @@ function CandidateRow({
       onClick={onClick}
       disabled={loading}
       className={`
-        w-full flex items-center gap-3 text-left transition-colors
+        flex w-full items-center gap-4 text-left transition-colors
         hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed
-        ${compact ? 'px-4 py-2.5' : 'px-5 py-4'}
+        ${compact ? 'px-4 py-3.5 sm:px-5' : 'px-6 py-5 sm:px-8'}
       `}
     >
       <CandidateAvatar
         imagePath={candidate.small_image_path}
         name={candidate.name}
         party={candidate.party}
-        sizeClass={compact ? 'w-8 h-8' : 'w-11 h-11'}
+        sizeClass={compact ? 'w-14 h-14' : 'w-16 h-16 sm:w-[4.5rem] sm:h-[4.5rem]'}
       />
-      <div className="flex-1 min-w-0">
-        <p className={`font-semibold text-slate-900 truncate ${compact ? 'text-sm' : 'text-base'}`}>
+      <div className="min-w-0 flex-1">
+        <p
+          className={`truncate font-semibold text-slate-900 ${compact ? 'text-base' : 'text-lg sm:text-xl'}`}
+        >
           {candidate.name}
         </p>
         {!compact && candidate.bio && (
-          <p className="text-xs text-slate-500 truncate mt-0.5">{candidate.bio}</p>
+          <p className="mt-1 line-clamp-2 text-sm leading-snug text-slate-500 sm:text-base">
+            {candidate.bio}
+          </p>
         )}
       </div>
       <span
-        className={`shrink-0 font-semibold ${compact ? 'text-xs' : 'text-sm'}`}
+        className={`shrink-0 font-semibold ${compact ? 'max-w-[40%] truncate text-sm sm:text-base' : 'max-w-[36%] truncate text-base sm:text-lg'}`}
         style={{ color: partyColor }}
       >
         {candidate.party}
       </span>
-      {loading && <Loader2 size={14} className="shrink-0 animate-spin text-slate-400" />}
+      {loading && (
+        <Loader2
+          size={compact ? 18 : 22}
+          className="shrink-0 animate-spin text-slate-400"
+        />
+      )}
     </button>
   );
 }

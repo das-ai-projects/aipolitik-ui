@@ -293,7 +293,7 @@ export default function DebatePage({ params }: { params: Promise<{ id: string }>
         <DebateAnswersDisplay latestAnswer={currentAnswer} />
       </div>
 
-      <div className="w-full shrink-0 border-t border-slate-200 bg-white px-4 py-3 sm:px-6">
+      <div className="w-full shrink-0 border-t border-slate-200 bg-white px-4 py-4 sm:px-6 sm:py-5">
         <form className="flex w-full flex-col gap-2" onSubmit={handleSubmitQuestion}>
           <div className="flex w-full items-center gap-3">
             <input
@@ -302,12 +302,12 @@ export default function DebatePage({ params }: { params: Promise<{ id: string }>
               onChange={(e) => setBottomInput(e.target.value)}
               disabled={executeLoading || navLoading}
               placeholder="Ask a question…"
-              className="min-w-0 flex-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-50"
+              className="min-h-[3.25rem] min-w-0 flex-1 rounded-full border border-slate-200 bg-slate-50 px-5 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-50"
             />
             <button
               type="submit"
               disabled={!bottomInput.trim() || executeLoading || navLoading}
-              className="shrink-0 rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+              className="min-h-[3.25rem] shrink-0 rounded-full bg-emerald-500 px-7 py-3 text-base font-semibold text-white transition-colors hover:bg-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {executeLoading ? 'Sending…' : 'Submit'}
             </button>

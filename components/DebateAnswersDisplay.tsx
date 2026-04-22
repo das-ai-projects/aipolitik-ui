@@ -43,10 +43,10 @@ export default function DebateAnswersDisplay({ latestAnswer }: Props) {
       />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="flex shrink-0 flex-col gap-3 border-b border-slate-200 bg-slate-100 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5">
-          <p className="text-center text-lg font-bold leading-snug text-slate-900 sm:text-xl">
+          <p className="text-center text-xl font-bold leading-snug text-slate-900 sm:text-2xl">
             {latestAnswer.question}
           </p>
-          <p className="text-center text-sm leading-snug text-slate-500 sm:text-base">
+          <p className="text-center text-base leading-snug text-slate-500 sm:text-lg">
             Click on the plus icon to view the full answer and sources for each candidate.
           </p>
         </div>
@@ -61,18 +61,18 @@ export default function DebateAnswersDisplay({ latestAnswer }: Props) {
                 key={entry.candidateId}
                 className="flex min-h-0 min-w-0 flex-1 basis-0 flex-row overflow-hidden border-b border-slate-100 last:border-b-0"
               >
-                <div className="flex w-40 shrink-0 flex-col items-center justify-center gap-2 self-stretch px-3 py-3 sm:w-48 md:w-52 md:px-4 md:py-4">
+                <div className="flex w-28 shrink-0 flex-col items-center justify-center gap-1.5 self-stretch px-2 py-2 sm:w-32 md:w-36 md:px-3 md:py-3">
                   <div
-                    className="rounded-full p-1"
+                    className="rounded-full p-0.5 sm:p-1"
                     style={{ backgroundColor: partyColor }}
                   >
-                    <div className="relative size-24 overflow-hidden rounded-full bg-slate-100 sm:size-28 md:size-32">
+                    <div className="relative size-16 overflow-hidden rounded-full bg-slate-100 sm:size-[4.25rem] md:size-[4.5rem]">
                       <Image
                         src={imageSrc}
                         alt={entry.candidate.name}
                         fill
                         className="object-cover"
-                        sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, 128px"
+                        sizes="(max-width: 640px) 64px, (max-width: 768px) 68px, 72px"
                       />
                     </div>
                   </div>
@@ -86,7 +86,7 @@ export default function DebateAnswersDisplay({ latestAnswer }: Props) {
 
                 <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden py-4 pl-5 pr-4 sm:pl-6 sm:pr-6 md:pl-8 md:pr-8">
                   <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-contain [justify-content:safe_center]">
-                    <p className="w-full min-w-0 text-justify text-sm leading-relaxed text-slate-800 sm:text-base md:text-lg">
+                    <p className="w-full min-w-0 text-justify text-base leading-relaxed text-slate-800 sm:text-lg md:text-xl">
                       {entry.shortAnswer}
                     </p>
                   </div>
@@ -100,7 +100,7 @@ export default function DebateAnswersDisplay({ latestAnswer }: Props) {
                   style={{ ['--party' as string]: partyColor } as CSSProperties}
                 >
                   <Plus
-                    size={28}
+                    size={24}
                     strokeWidth={2.25}
                     className="text-slate-400 transition-colors duration-150 group-hover/plus:text-white"
                   />

@@ -6,6 +6,7 @@ import { Search, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import CandidateAvatar from '@/components/CandidateAvatar';
+import { useTranslatedText } from '@/components/LanguagePreferenceContext';
 import { useDebatesContext } from '@/components/DebatesContext';
 import { Candidate } from '@/lib/graphql/types';
 import { PARTY_COLORS, getPartyColor } from '@/lib/party-colors';
@@ -59,6 +60,18 @@ export default function DebatesPage() {
 
   const parties = useMemo(() => Object.keys(PARTY_COLORS), []);
 
+  const step1Title = useTranslatedText('1. Enter the name of your debate');
+  const step2Title = useTranslatedText('2. Select up to 4 candidates for comparison');
+  const step3Title = useTranslatedText('3. Click below and start firing away!');
+  const formSubtitle = useTranslatedText(
+    'Name it, pick your lineup, then launch the debate.'
+  );
+  const searchResultsLabel = useTranslatedText('Search results');
+  const selectedHeading = useTranslatedText('Selected candidates');
+  const chooseTwoHint = useTranslatedText('Choose at least two people.');
+  const createDebateLabel = useTranslatedText('Create debate');
+  const creatingLabel = useTranslatedText('Creating…');
+
   useEffect(() => {
     if (!isNewDebateMode) return;
     setSearchValue('');
@@ -91,6 +104,9 @@ export default function DebatesPage() {
     }, 200);
     return () => clearTimeout(t);
   }, [searchValue, partyFilter, isNewDebateMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const inputBaseClass =
+    'min-h-[3.25rem] w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-base text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30';
 
   function handleSelectCandidate(candidate: Candidate) {
     if (selectedCandidates.some((c) => c.id === candidate.id)) return;
@@ -138,159 +154,199 @@ export default function DebatesPage() {
   }
 
   return (
-    <div className="h-full bg-white overflow-y-auto">
-      <form onSubmit={handleCreateDebate} className="max-w-4xl mx-auto px-6 py-8 space-y-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-slate-900">New Debate</h1>
+    <div className="h-full overflow-y-auto bg-slate-50">
+      <form
+        onSubmit={handleCreateDebate}
+        className="mx-auto max-w-5xl space-y-4 px-4 py-6 sm:px-8 sm:py-8"
+      >
+        <header className="flex items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">New Debate</h1>
+            <p className="mt-1.5 text-base text-slate-500">{formSubtitle}</p>
+          </div>
           <button
             type="button"
             onClick={closeNewDebate}
-            className="flex items-center justify-center w-8 h-8 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white hover:text-slate-700 hover:shadow-sm"
             aria-label="Close"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
-        </div>
+        </header>
 
-        <div className="max-w-xl mx-auto">
-          <label htmlFor="debate-name" className="sr-only">
-            Debate Name
-          </label>
-          <input
-            id="debate-name"
-            type="text"
-            value={debateName}
-            onChange={(e) => setDebateName(e.target.value)}
-            placeholder="Enter debate name"
-            className="w-full text-center px-5 py-3 text-base rounded-full border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-3">
-          <div className="relative">
-            <Search
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-            />
-            <input
-              type="text"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              placeholder="Search candidates by name"
-              className="w-full pl-9 pr-4 py-2.5 text-sm rounded-full border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition"
-            />
-          </div>
-          <select
-            value={partyFilter}
-            onChange={(e) => setPartyFilter(e.target.value)}
-            className="px-3 py-2.5 text-sm rounded-full border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition"
+        <section
+          aria-labelledby="debate-step-1"
+          className="rounded-2xl border border-slate-200/90 bg-white p-7 shadow-sm sm:p-10"
+        >
+          <h2
+            id="debate-step-1"
+            className="text-2xl font-bold leading-snug text-slate-900 sm:text-3xl"
           >
-            <option value="">All parties</option>
-            {parties.map((party) => (
-              <option key={party} value={party}>
-                {party}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 text-sm font-semibold text-slate-700">
-            Search Results
+            {step1Title}
+          </h2>
+          <div className="mt-4">
+            <label htmlFor="debate-name" className="sr-only">
+              Debate Name
+            </label>
+            <input
+              id="debate-name"
+              type="text"
+              value={debateName}
+              onChange={(e) => setDebateName(e.target.value)}
+              placeholder="Enter debate name"
+              className={`${inputBaseClass} text-center text-xl`}
+            />
           </div>
-          {searchResults.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-slate-400 text-center">
-              Search by candidate name or party to add participants.
+        </section>
+
+        <section
+          aria-labelledby="debate-step-2"
+          className="rounded-2xl border border-slate-200/90 bg-white p-7 shadow-sm sm:p-10"
+        >
+          <h2
+            id="debate-step-2"
+            className="text-2xl font-bold leading-snug text-slate-900 sm:text-3xl"
+          >
+            {step2Title}
+          </h2>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-[minmax(0,1fr)_minmax(12rem,14rem)] md:items-stretch">
+            <div className="relative">
+              <Search
+                size={18}
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                type="text"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                placeholder="Search candidates by name"
+                className={`${inputBaseClass} pl-11`}
+              />
             </div>
-          ) : (
-            <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
-              {searchResults.map((candidate) => {
-                const selected = selectedCandidates.some((c) => c.id === candidate.id);
-                return (
-                  <button
+            <select
+              value={partyFilter}
+              onChange={(e) => setPartyFilter(e.target.value)}
+              className={`${inputBaseClass} cursor-pointer bg-white pr-10`}
+            >
+              <option value="">All parties</option>
+              {parties.map((party) => (
+                <option key={party} value={party}>
+                  {party}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50/50">
+            <div className="border-b border-slate-200/80 bg-slate-50 px-4 py-3.5 sm:px-5">
+              <span className="text-base font-semibold text-slate-700">{searchResultsLabel}</span>
+            </div>
+            {searchResults.length === 0 ? (
+              <div className="flex min-h-[11rem] items-center justify-center px-4 py-6 text-center text-base text-slate-400">
+                Search by candidate name or party to add participants.
+              </div>
+            ) : (
+              <div className="max-h-80 divide-y divide-slate-100 overflow-y-auto bg-white">
+                {searchResults.map((candidate) => {
+                  const selected = selectedCandidates.some((c) => c.id === candidate.id);
+                  return (
+                    <button
+                      key={candidate.id}
+                      type="button"
+                      onClick={() => handleSelectCandidate(candidate)}
+                      disabled={selected || selectedCandidates.length >= 4}
+                      className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-emerald-50/60 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
+                    >
+                      <CandidateAvatar
+                        imagePath={candidate.medium_image_path}
+                        name={candidate.name}
+                        party={candidate.party}
+                        sizeClass="w-10 h-10"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-slate-900">{candidate.name}</p>
+                        <p className="mt-0.5 truncate text-xs" style={{ color: getPartyColor(candidate.party) }}>
+                          {candidate.party}
+                        </p>
+                      </div>
+                      {selected && (
+                        <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                          Selected
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-5 border-t border-slate-100 pt-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-base font-semibold text-slate-800">
+                {selectedHeading}{' '}
+                <span className="font-normal text-slate-500">({selectedCandidates.length}/4)</span>
+              </h3>
+              {selectedCandidates.length < 2 && (
+                <p className="text-xs font-medium text-rose-600">{chooseTwoHint}</p>
+              )}
+            </div>
+            {selectedCandidates.length === 0 ? (
+              <div className="mt-3 flex min-h-[9rem] items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-6 text-center text-base text-slate-400">
+                No candidates selected yet.
+              </div>
+            ) : (
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {selectedCandidates.map((candidate) => (
+                  <div
                     key={candidate.id}
-                    type="button"
-                    onClick={() => handleSelectCandidate(candidate)}
-                    disabled={selected || selectedCandidates.length >= 4}
-                    className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed text-left"
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3.5 transition-colors hover:border-slate-300"
                   >
                     <CandidateAvatar
                       imagePath={candidate.medium_image_path}
                       name={candidate.name}
                       party={candidate.party}
-                      sizeClass="w-10 h-10"
+                      sizeClass="w-11 h-11"
                     />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 truncate">{candidate.name}</p>
-                      <p
-                        className="text-xs mt-0.5"
-                        style={{ color: getPartyColor(candidate.party) }}
-                      >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-900">{candidate.name}</p>
+                      <p className="truncate text-xs" style={{ color: getPartyColor(candidate.party) }}>
                         {candidate.party}
                       </p>
                     </div>
-                    {selected && <span className="text-xs font-semibold text-emerald-600">Selected</span>}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-800">
-              Selected Candidates ({selectedCandidates.length}/4)
-            </h2>
-            {selectedCandidates.length < 2 && (
-              <p className="text-xs text-rose-500">Select at least 2 candidates.</p>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCandidate(candidate.id)}
+                      className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 transition-colors hover:bg-white hover:text-slate-800"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-          {selectedCandidates.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-sm text-slate-400 text-center">
-              No candidates selected yet.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {selectedCandidates.map((candidate) => (
-                <div
-                  key={candidate.id}
-                  className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3"
-                >
-                  <CandidateAvatar
-                    imagePath={candidate.medium_image_path}
-                    name={candidate.name}
-                    party={candidate.party}
-                    sizeClass="w-12 h-12"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 truncate">{candidate.name}</p>
-                    <p className="text-xs" style={{ color: getPartyColor(candidate.party) }}>
-                      {candidate.party}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveCandidate(candidate.id)}
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-700"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        </section>
 
-        <div className="pt-2">
+        <section
+          aria-labelledby="debate-step-3"
+          className="rounded-2xl border border-slate-200/90 bg-white p-7 shadow-sm sm:p-10"
+        >
+          <h2
+            id="debate-step-3"
+            className="text-2xl font-bold leading-snug text-slate-900 sm:text-3xl"
+          >
+            {step3Title}
+          </h2>
           <button
             type="submit"
             disabled={isSubmitting || selectedCandidates.length < 2 || selectedCandidates.length > 4}
-            className="mx-auto block px-7 py-2.5 text-sm font-semibold rounded-full bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="mt-4 w-full rounded-xl bg-emerald-500 py-4 text-lg font-semibold text-white shadow-sm transition hover:bg-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {isSubmitting ? 'Creating...' : 'Create Debate'}
+            {isSubmitting ? creatingLabel : createDebateLabel}
           </button>
-        </div>
+        </section>
       </form>
     </div>
   );
