@@ -11,6 +11,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import CandidateAvatar from '@/components/CandidateAvatar';
 import DebateAnswersDisplay from '@/components/DebateAnswersDisplay';
 import { useDebatesContext } from '@/components/DebatesContext';
+import { useLanguagePreference } from '@/components/LanguagePreferenceContext';
 import type { DebateAnswer } from '@/lib/graphql/types';
 
 const GET_DEBATE = gql`
@@ -83,8 +84,8 @@ const GET_DEBATE_ANSWER_BY_OFFSET = gql`
 `;
 
 const EXECUTE_DEBATE = gql`
-  mutation ExecuteDebate($debateId: String!, $question: String!) {
-    executeDebate(debateId: $debateId, question: $question) {
+  mutation ExecuteDebate($debateId: String!, $question: String!, $language: PreferredLanguage) {
+    executeDebate(debateId: $debateId, question: $question, language: $language) {
       ...DebateAnswerFields
     }
   }
@@ -101,6 +102,7 @@ function candidateSurname(fullName: string): string {
 export default function DebatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: debateId } = use(params);
   const { notifyDebateUpdated } = useDebatesContext();
+  const { preferredLanguage } = useLanguagePreference();
   const { data, loading, error } = useQuery(GET_DEBATE, {
     variables: { id: debateId },
     // Fresh debate + latest answer on every visit; do not read or persist this payload in the cache.
@@ -178,7 +180,7 @@ export default function DebatePage({ params }: { params: Promise<{ id: string }>
     setSubmitError(null);
     try {
       const result = await executeDebateMutation({
-        variables: { debateId, question: q },
+        variables: { debateId, question: q, language: preferredLanguage },
       });
       const newAnswer = (result.data as { executeDebate?: DebateAnswer } | undefined)
         ?.executeDebate;

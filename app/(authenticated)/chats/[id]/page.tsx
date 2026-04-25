@@ -7,6 +7,7 @@ import { SendHorizonal, X } from 'lucide-react';
 import Link from 'next/link';
 import CandidateAvatar from '@/components/CandidateAvatar';
 import { useChatsContext } from '@/components/ChatsContext';
+import { useLanguagePreference } from '@/components/LanguagePreferenceContext';
 import PositionListItem from '@/components/PositionListItem';
 import { ChatMessage, CandidatePosition } from '@/lib/graphql/types';
 
@@ -81,8 +82,8 @@ const GET_POSITIONS_BY_IDS = gql`
 `;
 
 const CREATE_CHAT_MESSAGE = gql`
-  mutation CreateChatMessage($chatId: String!, $userMessage: String!) {
-    createChatMessage(chatId: $chatId, userMessage: $userMessage) {
+  mutation CreateChatMessage($chatId: String!, $userMessage: String!, $language: PreferredLanguage) {
+    createChatMessage(chatId: $chatId, userMessage: $userMessage, language: $language) {
       id
       chatId
       dateGenerated
@@ -160,6 +161,7 @@ function MessageBubble({
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: chatId } = use(params);
+  const { preferredLanguage } = useLanguagePreference();
 
   // ── Chat metadata ───────────────────────────────────────────────────────────
 
@@ -333,7 +335,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     scrollIntentRef.current = 'new-message';
     setPendingUserMessage(text);
 
-    const result = await createChatMessage({ variables: { chatId, userMessage: text } });
+    const result = await createChatMessage({
+      variables: { chatId, userMessage: text, language: preferredLanguage },
+    });
     const newMsg: ChatMessage = (result.data as any).createChatMessage;
 
     scrollIntentRef.current = 'new-message';
